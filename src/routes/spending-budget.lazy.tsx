@@ -147,6 +147,7 @@ function Index() {
         <h3 className="text-2xl font-semibold">Predicate</h3>
       </div>
 
+
       <div className="mt-12 items-baseline flex gap-2">
         <h5 className="font-semibold text-xl">Wallet Balance:</h5>
         <span className="text-gray-400">
