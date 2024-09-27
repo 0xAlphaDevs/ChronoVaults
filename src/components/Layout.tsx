@@ -10,7 +10,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* <Navbar /> */}
         <Sidebar />
 
-        <div className="min-h-screen items-center p-24 flex flex-col gap-6">
+        <div className="min-h-screen col-start-3 col-end-13 pr-10 pl-96 py-10 flex flex-col gap-4">
           {children}
         </div>
       </div>

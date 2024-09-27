@@ -1,6 +1,6 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
 import { Button } from "../components/Button";
-import { FuelLogo } from "../components/FuelLogo";
+import { CirclePlusIcon } from "lucide-react";
 import { Input } from "../components/Input";
 import { Link } from "../components/Link";
 import { useActiveWallet } from "../hooks/useActiveWallet";
@@ -142,11 +142,13 @@ function Index() {
 
   return (
     <>
-      <div className="flex gap-4">
-        <FuelLogo />
-        <h3 className="text-2xl font-semibold">Predicate</h3>
+      <div className="flex items-center justify-between">
+        <p className="font-semibold text-xl">Spending Budget Vaults</p>
+        <Button className="flex items-center gap-2">
+          <CirclePlusIcon className="h-4 w-4" />
+          <span>Create Spending Budget Vault</span>
+        </Button>
       </div>
-
 
       <div className="mt-12 items-baseline flex gap-2">
         <h5 className="font-semibold text-xl">Wallet Balance:</h5>
@@ -197,24 +199,6 @@ function Index() {
       >
         Unlock Predicate and Transfer 0.0009 ETH back to Wallet
       </Button>
-
-      <span className="mt-8 w-[400px] text-gray-400">
-        Do note that when you 'unlock' a predicate, the predicate also pays for
-        the gas of the transaction. <br />
-        This is why you will notice that the balance of the predicate gets
-        reduced by 0.09 ETH + a nominal gas fee.
-      </span>
-
-      <Link
-        href="https://docs.fuel.network/docs/fuels-ts/predicates"
-        target="_blank"
-      >
-        Learn more about Predicates
-      </Link>
-
-      <Link href="/" className="mt-12">
-        Back to Home
-      </Link>
     </>
   );
 }
