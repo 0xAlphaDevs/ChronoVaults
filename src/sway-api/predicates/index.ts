@@ -10,4 +10,4 @@
   Fuel-Core version: 0.35.0
 */
 
-export { TimeLockPredicate } from './TimeLockPredicate';
+export { SpendingBudgetPredicate } from './SpendingBudgetPredicate';

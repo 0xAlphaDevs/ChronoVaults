@@ -1,16 +1,15 @@
 predicate;
 
-/// This predicate checks if the given password is 1337.
+/// This predicate is conditinal-release predicate. It checks if the receiver and secret are correct.
 /// If it is, the predicate is 'unlocked' and the transaction is allowed to proceed.
 /// Otherwise, it is reverted.
-use std::block::timestamp;
 use std::constants::ZERO_B256;
 
 configurable {
     RECEIVER: Address = Address::from(ZERO_B256),
-    DEADLINE: u64 = 0,
+    SECRET: u64 = 0,
 }
 
-fn main(receiver: Address, current_time: u64) -> bool {
-    current_time > DEADLINE && receiver == RECEIVER
+fn main(receiver: Address, secret: u64) -> bool { 
+    secret == SECRET && receiver == RECEIVER
 }
