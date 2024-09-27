@@ -42,7 +42,7 @@ export const Navbar: FC = () => {
 
       const tx = await faucetWallet?.transfer(
         wallet.address,
-        bn.parseUnits("5"),
+        bn.parseUnits("5")
       );
       await tx?.waitForResult();
 
@@ -55,7 +55,7 @@ export const Navbar: FC = () => {
     if (CURRENT_ENVIRONMENT === "testnet") {
       return window.open(
         `${TESTNET_FAUCET_LINK}?address=${wallet.address.toAddress()}`,
-        "_blank",
+        "_blank"
       );
     }
   };
@@ -69,7 +69,7 @@ export const Navbar: FC = () => {
 
   const tryToAddNetwork = () => {
     return alert(
-      `Please add the network ${NODE_URL} to your Fuel wallet, or swtich to it if you have it already, and refresh the page.`,
+      `Please add the network ${NODE_URL} to your Fuel wallet, or swtich to it if you have it already, and refresh the page.`
     );
   };
 
@@ -80,6 +80,9 @@ export const Navbar: FC = () => {
         <Link href="/">Home</Link>
 
         <Link href="/faucet">Faucet</Link>
+        <Link href="/spending-budget">Spending Budget Vaults</Link>
+        <Link href="/time-lock">Time Lock Vaults</Link>
+        <Link href="/conditional-release">Conditional Release Vaults</Link>
 
         {isBrowserWalletConnected && (
           <Button onClick={disconnect}>Disconnect Wallet</Button>

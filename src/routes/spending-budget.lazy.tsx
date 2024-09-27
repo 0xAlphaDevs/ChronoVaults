@@ -12,7 +12,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import useAsync from "react-use/lib/useAsync";
 
-export const Route = createLazyFileRoute("/predicate")({
+export const Route = createLazyFileRoute("/spending-budget")({
   component: Index,
 });
 
