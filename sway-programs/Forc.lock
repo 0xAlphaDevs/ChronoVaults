@@ -13,11 +13,11 @@ source = "member"
 dependencies = ["std"]
 
 [[package]]
-name = "test-predicate"
+name = "test-script"
 source = "member"
 dependencies = ["std"]
 
 [[package]]
-name = "test-script"
+name = "time-lock-predicate"
 source = "member"
 dependencies = ["std"]
