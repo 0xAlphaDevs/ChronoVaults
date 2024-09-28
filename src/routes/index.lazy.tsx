@@ -5,6 +5,7 @@ import { createLazyFileRoute } from "@tanstack/react-router";
 // import { useState } from "react";
 // import { Link } from "../components/Link";
 import { Button } from "../components/Button";
+import { Card, CardDescription, CardHeader } from "../components/ui/card";
 // import toast from "react-hot-toast";
 // import { useActiveWallet } from "../hooks/useActiveWallet";
 // import useAsync from "react-use/lib/useAsync";
@@ -18,6 +19,7 @@ import { Button } from "../components/Button";
 
 import { useConnectUI } from "@fuels/react";
 import { useBrowserWallet } from "../hooks/useBrowserWallet";
+import { Sidebar } from "@/components/Sidebar";
 
 
 export const Route = createLazyFileRoute("/")({
@@ -87,7 +89,7 @@ function Index() {
   return (
     <>
       {!isBrowserWalletConnected ? (
-        <div className="flex flex-col gap-4 items-center mt-20">
+        <div className="flex flex-col gap-4 items-center mt-24">
           <img src="/logo.png" alt="fuel" className="w-20 h-20" />
           <h1 className="text-3xl font-semibold">Welcome to Chrono Vaults</h1>
           <span className="text-gray-400 font-semibold">
@@ -95,12 +97,54 @@ function Index() {
           </span>
 
           <Button onClick={connect} className="font-bold text-xl mt-4">Connect Wallet</Button>
+          <div className="grid grid-cols-3 gap-8 px-20 mt-20">
+            <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
+              <CardHeader>
+                <CardDescription className="text-center pt-1 text-lg text-white">
+                  This is a feature description of Chrono Vaults
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
+              <CardHeader>
+                <CardDescription className="text-center pt-1 text-lg text-white">
+                  This is a feature description of Chrono Vaults
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
+              <CardHeader>
+                <CardDescription className="text-center pt-1 text-lg text-white">
+                  This is a feature description of Chrono Vaults
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+          <div className="fixed mx-[39%] bottom-4">
+            <div className="flex justify-center items-center">
+              <p className="text-muted-foreground">
+                &copy;{" "}
+                <a href="https://www.alphadevs.dev/" target="_blank">
+                  Team AlphaDevs
+                </a>{" "}
+                | All rights reserved
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 items-center">
-          <h2 className="text-2xl font-semibold">Now you can create three different kind of vaults</h2>
-          {/* <Button onClick={disconnect}>Disconnect Wallet</Button> */}
-        </div>
+        <>
+          <Sidebar />
+
+          <div className="flex flex-col gap-4 items-center mt-60 pl-40">
+            <h2 className="text-5xl font-semibold">This is Chrono Vaults</h2>
+            <p className="text-3xl">Now you can create vaults using our platform</p>
+            <p className="text-lg">Navigate to any route to create your desidred vaults</p>
+
+            {/* <Button onClick={disconnect}>Disconnect Wallet</Button> */}
+          </div>
+
+        </>
       )}
 
 
