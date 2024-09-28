@@ -36,6 +36,16 @@ const mockSpendingVaults = [
 function Index() {
   // let baseAssetId: string;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
+  const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [vaultForm, setVaultForm] = useState({
+    vaultName: '',
+    monthlyLimit: '',
+    weeklyPercentage: '',
+  });
+
 
   // const { wallet, walletBalance, refreshWalletBalance } = useActiveWallet();
 
@@ -158,6 +168,35 @@ function Index() {
   //   }
   // };
 
+  // Function to handle vault creation form input change
+  const handleVaultFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setVaultForm((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  // Function to handle vault creation
+  const handleCreateVault = () => {
+    console.log("Vault Data: ", vaultForm);
+    setIsDialogOpen(false);
+  };
+
+
+  // Functions to handle deposit and withdraw
+  const handleDeposit = () => {
+    console.log(`Depositing: ${depositAmount}`);
+    // Add your deposit logic here
+    setIsDepositDialogOpen(false);
+  };
+
+  const handleWithdraw = () => {
+    console.log(`Withdrawing: ${withdrawAmount}`);
+    // Add your withdraw logic here
+    setIsWithdrawDialogOpen(false);
+  };
+
   return (
     <>
       <Sidebar />
@@ -180,25 +219,54 @@ function Index() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="vaultName">Vault Name</Label>
-                    <Input id="vaultName" placeholder="e.g., Monthly Budget" />
+                    <Input
+                      id="vaultName"
+                      value={vaultForm.vaultName}
+                      onChange={handleVaultFormChange}
+                      placeholder="e.g., Monthly Budget"
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="monthlyLimit">Monthly Limit</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input id="monthlyLimit" placeholder="Enter amount" type="number" className="pl-10" />
+                      <Input
+                        id="monthlyLimit"
+                        value={vaultForm.monthlyLimit}
+                        onChange={handleVaultFormChange}
+                        placeholder="Enter amount"
+                        type="number"
+                        className="pl-10"
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="weeklyPercentage">Weekly Percentage</Label>
                     <div className="relative">
                       <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input id="weeklyPercentage" placeholder="25%" type="number" max="100" className="pl-10" />
+                      <Input
+                        id="weeklyPercentage"
+                        value={vaultForm.weeklyPercentage}
+                        onChange={handleVaultFormChange}
+                        placeholder="25%"
+                        type="number"
+                        max="100"
+                        className="pl-10"
+                        required
+                      />
                     </div>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white w-full">Create Vault</Button>
+                  <Button
+                    onClick={handleCreateVault}
+                    type="submit"
+                    className="bg-green-500 hover:bg-green-600 text-white w-full"
+                  >
+                    Create Vault
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -234,8 +302,59 @@ function Index() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-gray-50 border-t flex items-center gap-8">
-                  <Button variant="outline" className="w-full mt-4">Deposit</Button>
-                  <Button variant="outline" className="w-full mt-4">Withdraw</Button>
+                  {/* Deposit Button Dialog */}
+                  <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full mt-4">Deposit</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Deposit to Vault</DialogTitle>
+                        <DialogDescription>Enter the amount to deposit into the vault.</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <Label htmlFor="depositAmount">Amount</Label>
+                        <Input
+                          id="depositAmount"
+                          type="number"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          placeholder="Enter amount"
+                          required
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleDeposit} className="bg-green-500 hover:bg-green-600 text-white w-full">Deposit</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Withdraw Button Dialog */}
+                  <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full mt-4">Withdraw</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Withdraw from Vault</DialogTitle>
+                        <DialogDescription>Enter the amount to withdraw from the vault.</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <Label htmlFor="withdrawAmount">Amount</Label>
+                        <Input
+                          id="withdrawAmount"
+                          type="number"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                          placeholder="Enter amount"
+                          required
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleWithdraw} className="bg-green-500 hover:bg-green-600 text-white w-full">Withdraw</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </CardFooter>
               </Card>
             ))}
