@@ -23,7 +23,6 @@ const mockSpendingVaults = [
 ];
 
 function Index() {
-  // let baseAssetId: string;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
@@ -75,7 +74,7 @@ function Index() {
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-semibold">
                   <CirclePlusIcon className="h-4 w-4" />
-                  <span>Create Conditional Release Vault</span>
+                  <span>Create Spending Budget Vault</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
