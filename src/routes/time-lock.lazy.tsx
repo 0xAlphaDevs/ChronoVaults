@@ -30,35 +30,31 @@ import {
   TrendingUp,
   CirclePlusIcon,
   User,
-  CalendarIcon,
+  Clock10Icon,
 } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
-import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
 
 export const Route = createLazyFileRoute('/time-lock')({
   component: Index,
 })
 
-// Mock data for existing vaults
-const mockSpendingVaults = [
+// Mock data for time-locked vaults
+const mockTimeLockVaults = [
   {
     id: 1,
-    name: 'Monthly Budget',
-    limit: 1000,
-    weeklyPercentage: 25,
-    spent: 750,
+    name: "Vacation Savings",
+    amount: 1000,
+    lockPeriod: 30, // lock period in days
+    createdAt: new Date("2024-01-01"),
   },
-  { id: 2, name: 'Groceries', limit: 400, weeklyPercentage: 25, spent: 150 },
   {
-    id: 3,
-    name: 'Entertainment',
-    limit: 200,
-    weeklyPercentage: 50,
-    spent: 180,
+    id: 2,
+    name: "Emergency Fund",
+    amount: 500,
+    lockPeriod: 90, // lock period in days
+    createdAt: new Date("2024-02-01"),
   },
-]
+];
+
 
 function Index() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -66,7 +62,7 @@ function Index() {
     vaultName: string;
     receiver: string;
     amount: string;
-    lockDate: Date | undefined;
+    lockDate: string | undefined;
   }>({
     vaultName: '',
     receiver: '',
@@ -88,6 +84,9 @@ function Index() {
     console.log('Vault Data: ', vaultForm)
     setIsDialogOpen(false)
   }
+
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <>
       <Sidebar />
@@ -157,34 +156,19 @@ function Index() {
                     </div>
                   </div>
 
-                  {/* Date Picker for Lock Period */}
+                  {/* Date Input for Lock Period */}
                   <div className="space-y-2">
                     <Label htmlFor="lockDate">Lock Date</Label>
-                    <div className="relative">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !vaultForm.lockDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {vaultForm.lockDate ? format(vaultForm.lockDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={vaultForm.lockDate}
-                            onSelect={(date: Date | undefined) => setVaultForm((prev) => ({ ...prev, lockDate: date }))}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <Input
+                      id="lockDate"
+                      type="date" // Change to type="date"
+                      value={vaultForm.lockDate || ''} // Set to empty string if undefined
+                      onChange={handleVaultFormChange}
+                      min={today}
+                      required
+                    />
                   </div>
+
 
                 </div>
                 <DialogFooter>
@@ -201,18 +185,18 @@ function Index() {
 
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-            {mockSpendingVaults.map((vault) => (
+            {mockTimeLockVaults.map((vault) => (
               <Card
                 key={vault.id}
                 className="overflow-hidden transition-shadow duration-300 hover:shadow-lg"
               >
                 <CardHeader className="bg-gradient-to-r from-yellow-200 to-green-600 text-black">
                   <CardTitle className="flex items-center">
-                    <PiggyBank className="mr-2 h-6 w-6" />
+                    <Clock10Icon className="mr-2 h-6 w-6" />
                     {vault.name}
                   </CardTitle>
                   <CardDescription className="text-black">
-                    Monthly Limit: ${vault.limit}
+                    Amount: ${vault.amount}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
