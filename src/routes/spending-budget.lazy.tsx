@@ -233,8 +233,9 @@ function Index() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="bg-gray-50 border-t">
-                  <Button variant="outline" className="w-full mt-4">View Details</Button>
+                <CardFooter className="bg-gray-50 border-t flex items-center gap-8">
+                  <Button variant="outline" className="w-full mt-4">Deposit</Button>
+                  <Button variant="outline" className="w-full mt-4">Withdraw</Button>
                 </CardFooter>
               </Card>
             ))}
