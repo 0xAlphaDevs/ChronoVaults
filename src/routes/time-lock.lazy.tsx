@@ -11,6 +11,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import useAsync from "react-use/lib/useAsync";
 import { CirclePlusIcon } from "lucide-react";
+import { Sidebar } from "@/components/Sidebar";
 
 export const Route = createLazyFileRoute("/time-lock")({
   component: Index,
@@ -142,64 +143,66 @@ function Index() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <p className="font-semibold text-xl">Time Lock Vaults</p>
-        <Button className="flex items-center gap-2">
-          <CirclePlusIcon className="h-4 w-4" />
-          <span>Create Time Lock Vault</span>
-        </Button>
-      </div>
+      <Sidebar />
+      <div className="col-start-3 col-end-13 pr-20 pl-96 py-10 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-xl">Time Lock Vaults</p>
+          <Button className="flex items-center gap-2">
+            <CirclePlusIcon className="h-4 w-4" />
+            <span>Create Time Lock Vault</span>
+          </Button>
+        </div>
 
-      <div className="mt-12 items-baseline flex gap-2">
-        <h5 className="font-semibold text-xl">Wallet Balance:</h5>
-        <span className="text-gray-400">
-          {walletBalance?.format({
-            precision: 6,
-          })}{" "}
-          ETH
-        </span>
-      </div>
+        <div className="mt-12 items-baseline flex gap-2">
+          <h5 className="font-semibold text-xl">Wallet Balance:</h5>
+          <span className="text-gray-400">
+            {walletBalance?.format({
+              precision: 6,
+            })}{" "}
+            ETH
+          </span>
+        </div>
 
-      <div className="items-baseline flex gap-2">
-        <h5 className="font-semibold text-xl">Predicate Balance:</h5>
-        <span className="text-gray-400">
-          {predicateBalance?.format({
-            precision: 6,
-          })}{" "}
-          ETH
-        </span>
-      </div>
+        <div className="items-baseline flex gap-2">
+          <h5 className="font-semibold text-xl">Predicate Balance:</h5>
+          <span className="text-gray-400">
+            {predicateBalance?.format({
+              precision: 6,
+            })}{" "}
+            ETH
+          </span>
+        </div>
 
-      {/* <Button
+        {/* <Button
         onClick={async () =>
           await transferFundsToPredicate(bn.parseUnits("0.001"))
         }
       >
         Transfer 0.1 ETH to Predicate
       </Button> */}
-      <Button
-        onClick={async () =>
-          await transferFundsToPredicate(bn.parseUnits("0.001"))
-        }
-      >
-        Transfer 0.001 ETH to Time Lock Predicate
-      </Button>
+        <Button
+          onClick={async () =>
+            await transferFundsToPredicate(bn.parseUnits("0.001"))
+          }
+        >
+          Transfer 0.001 ETH to Time Lock Predicate
+        </Button>
 
-      <Input
-        className="w-[300px] mt-8"
-        value={pin as string}
-        onChange={(e) => setPin(e.target.value)}
-        placeholder="Hint - the correct pin is 1337"
-      />
+        <Input
+          className="w-[300px] mt-8"
+          value={pin as string}
+          onChange={(e) => setPin(e.target.value)}
+          placeholder="Hint - the correct pin is 1337"
+        />
 
-      <Button
-        onClick={async () =>
-          await unlockPredicateAndTransferFundsBack(bn.parseUnits("0.0009"))
-        }
-      >
-        Unlock Predicate and Transfer 0.0009 ETH back to Wallet
-      </Button>
-
+        <Button
+          onClick={async () =>
+            await unlockPredicateAndTransferFundsBack(bn.parseUnits("0.0009"))
+          }
+        >
+          Unlock Predicate and Transfer 0.0009 ETH back to Wallet
+        </Button>
+      </div>
     </>
   );
 }

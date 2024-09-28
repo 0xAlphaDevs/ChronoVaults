@@ -135,13 +135,10 @@ function Index() {
       ) : (
         <>
           <Sidebar />
-
           <div className="flex flex-col gap-4 items-center mt-60 pl-40">
             <h2 className="text-5xl font-semibold">This is Chrono Vaults</h2>
             <p className="text-3xl">Now you can create vaults using our platform</p>
             <p className="text-lg">Navigate to any route to create your desidred vaults</p>
-
-            {/* <Button onClick={disconnect}>Disconnect Wallet</Button> */}
           </div>
 
         </>
