@@ -133,7 +133,7 @@ export const Sidebar: FC = () => {
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                 <a
                   href="/overview"
-                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/conditional-release" ? "bg-green-600" : ""
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/overview" ? "bg-green-600" : ""
                     }`}
                 >
                   <span>Overview</span>
