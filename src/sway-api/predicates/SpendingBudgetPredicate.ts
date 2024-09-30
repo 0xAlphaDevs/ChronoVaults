@@ -99,27 +99,27 @@ const abi = {
     {
       "name": "RECEIVER",
       "concreteTypeId": "f597b637c3b0f588fb8d7086c6f4735caa3122b85f0423b82e489f9bb58e2308",
-      "offset": 1320
+      "offset": 1328
     },
     {
       "name": "AMOUNT",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 1312
+      "offset": 1320
     },
     {
       "name": "START_TIME",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 1352
+      "offset": 1360
     },
     {
       "name": "TIME_PERIOD",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 1360
+      "offset": 1368
     }
   ]
 };
 
-const bytecode = decompressBytecode('H4sIAAAAAAAAA51Uz2sTURCepInZitDFpCovBx8YYQ9VFmrE4wubELdpyJMiBDQmPQg9eNCgEjzt0aMK/jhWD+JxAxG8uUeP/RNS0INooAcLKT3E7738ZJNeurC8ycx8M9/7ZjbswKanRFHST5zXBkHEHAzoNdEt+eeA5E8yZFcQ769T9bgblcfdGPJfIGYgxhEzQrHviFkjnBWKPULMHsXsUOwh+yvRN9J6Imip3qO1muOvbReiJEt+44Frkiz6jfsFk5J4n+cpOf7dvE3RZCHlwRe5iVts56IbwF+XTvsxcqqIG1Yh5qHOl6aA7aZIOr7fzMPOZQR6LwNzDphrwOwAwycYlafsXMqD/9uMP5j629MeTruKvB32m4j9MsO6fWbFPcWXW72Up3JC8XsqvsB/lzl7SgeruQlsqRPUe+Yy+J4Fjx+4h63ugb591LZHPCxtgx90vFIr+hngX8oKciRquFn04eAInvtzPD+pfhlB9Jbo8jsDOXo2xJmzS6z4iljJI1bpktzyjfFd2f7cnlxUdbTOvZgAV1PbTkfbC+6ZVvm41xLil3SuGxPsH9Eb1fvIpg/g8h6cNvqaW2KGmzHkBl6lrqpBetbFDrFDU+ENdsTH+MQIvzKP71LNJbwcNbi2obmR3kwFppsJ6jn4HB81NSfUNMc1V0Y1Z/VqLdDLOkmvZ0TrIb3kjF4S87VP2CtT70fRN/RsC3G131Vt51aHdl7NfKJla4GWs7yDKW/oUYYGqlYvS9ifXW1Xvk78ablKZjlL9Zytegm9o04nQG5D55Y1H2/IR9fgYz9mBL43xjMKZma0iJcI61mTIs7dq+o8c354UhrnhTv4P5AUSY5OaJSQeWEMvz39/apvHHxS3setDmeHQvUXYV1O+/wHdY4cqVgFAAA=');
+const bytecode = decompressBytecode('H4sIAAAAAAAAA51UTWsTURS9SVM7FaGDSVVeFj4whVlUGagVd51hEpJpWvpAhYDGpAuhCxcatARXs3Spgh/L6kJcTiCCO2fpsj8hBV2IBrqwkNJFPO8lkwyTdNOBIXfuuefe8859hB2a9IwoSeqZNar9IKH3+/Sa6Lb4c0jiJ2miYxHvrVDlpJMUJ50U6l8A04BxYFoM+w7MGPKMGPYYmDnEzBj2iP0VmJtoPrVoptal5arjL28XkiTKfv2hq5Mo+vUHBZ3SeHfzlA6/GyVKpgsZD7nELZxi206ug39DOK0nqKkA14xCykOfLw0LsZsh4fh+I4/YzlmYPQ/OBXCug7MDDh9xZJ2M7YyH/LdIPhjnW+MZTquCuh32m4j90uO+fWbFfamXG92MJ2ti+H2JT8nfY86+9MFobIBbbge1rj4Pveeh4wfOYcpzYG4Pvc2hDkPF0Acfr1WLfg78l2ILNQI93FXM4dAInQcTOj/JeTmL6C3R1XcaatRuiDNnj1jxFbGyR2yrQ+KOr4VnZQcT9+Sy7KN87qYsaNVV7LRVPOWcWVmPc80Av6Jq3ZTF/hG9kbOPTfoALe+hab2ntM1FtGkDbdBV7sgepHZdbBM70iVfY8c85M8N+QuT/A5VXcLL0YOrGJ5r2Y1MoLu5oGYj5/joqTShpx72XBj2jPrVnOKXcZpfz4lWYn6JiF8C+zVPuVe6uh9FX1O7LczK+11Rsb04iPNy5yMvm1O8jOoOxrrhxyY8kL26q4T7s6fira+jfFYskr65SjXblLMsdUeddoDauqrdVHq8gR7Vg4d57Ah6b4Y7CiI7CnWtRXSV4n5WhUXVu9Ysd5esrJv38H3uorskd6eJkjXwo6vmD2baS/Sx3Oa7JUrAtxR2qV3C/4H8TuOXHXGpoxTxZ03qOOvzH5rTW5NgBQAA');
 
 export class SpendingBudgetPredicate extends Predicate<
   SpendingBudgetPredicateInputs,

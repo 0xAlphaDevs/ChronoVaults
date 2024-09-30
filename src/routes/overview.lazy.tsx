@@ -1,25 +1,28 @@
-'use client'
+"use client";
 
-import { createLazyFileRoute } from '@tanstack/react-router'
-import { Sidebar } from '@/components/Sidebar'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
-import { Input } from "../components/ui/input";
-import { Check, Copy, Search } from 'lucide-react';
+import { createLazyFileRoute } from "@tanstack/react-router";
+import { Sidebar } from "@/components/Sidebar";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../components/ui/tabs";
+import { Check, Copy } from "lucide-react";
 import { PieChart, Pie } from "recharts";
 // import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
+import { AssetDistributionChart } from "@/components/overview/AssetDistributionChart";
 
-
-export const Route = createLazyFileRoute('/overview')({
+export const Route = createLazyFileRoute("/overview")({
   component: Index,
-})
-
+});
 
 function Index() {
   // Data for pie chart
-  const data = [{ name: 'STRK', value: 100 }];
-  const COLORS = ['#003399'];
+  const data = [{ name: "STRK", value: 100 }];
+  const COLORS = ["#003399"];
   const [isCopied, setIsCopied] = useState(false);
   const walletAddress = "0x01b1...F406";
 
@@ -33,35 +36,34 @@ function Index() {
   return (
     <>
       <Sidebar />
-      <div className='col-start-3 col-end-13 pr-20 pl-96 py-10 flex flex-col gap-4'>
-        <div className=" flex relative mb-6 items-center gap-2 rounded-lg max-w-md">
+      <div className="col-start-3 col-end-13 pr-20 pl-96 py-10 flex flex-col gap-4">
+        {/* <div className=" flex relative mb-6 items-center gap-2 rounded-lg max-w-md">
           <Search size={20} className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
           <Input
             placeholder="Search for vault"
             className="flex-1 pl-10"
           />
-        </div>
+        </div> */}
 
-        <div className='flex justify-between items-center'>
-
+        <div className="flex justify-between items-center">
           {/* Account Info Section */}
 
           <div className="mb-6 flex justify-between items-center p-4 rounded-lg shadow-md">
-            <div className='flex items-center gap-2'>
-              <Avatar className='h-28 w-28'>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-28 w-28">
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 <h2 className="text-3xl font-semibold">
                   {walletAddress}
-                  <button
-                    onClick={handleCopy}
-                    className="ml-2"
-                  >
+                  <button onClick={handleCopy} className="ml-2">
                     {isCopied ? (
                       <>
-                        <Check size={20} className="inline-block text-green-500  font-bold" />
+                        <Check
+                          size={20}
+                          className="inline-block text-green-500  font-bold"
+                        />
                       </>
                     ) : (
                       <>
@@ -82,31 +84,12 @@ function Index() {
             </Button>
           </div> */}
           </div>
-          <div className="mb-6 flex items-center border rounded-lg shadow-md pl-4">
-            <div className='flex items-center gap-2'>
-              <h3 className="text-center text-lg font-bold mb-2">VAULT 1</h3>
-              <h2 className="text-center text-lg mb-2">1000 %</h2>
-            </div>
-            {/* Pie Chart */}
-            <div className="w-1/4 p-4 ">
-              <PieChart width={100} height={100}>
-                <Pie
-                  data={data}
-                  dataKey="value"
-                  cx={50}
-                  cy={50}
-                  innerRadius={30}
-                  outerRadius={40}
-                  fill={COLORS[0]}
-                />
-              </PieChart>
-            </div>
-          </div>
+          <AssetDistributionChart />
         </div>
         {/* Tabs for Assets, NFTs, Activity */}
         <div className=" border rounded-lg shadow-md p-4">
-          <Tabs defaultValue="assets" >
-            <TabsList className='bg-black'>
+          <Tabs defaultValue="assets">
+            <TabsList className="bg-black">
               <TabsTrigger value="assets">Assets</TabsTrigger>
               <TabsTrigger value="nfts">NFTs</TabsTrigger>
             </TabsList>
@@ -145,5 +128,5 @@ function Index() {
         </div>
       </div>
     </>
-  )
+  );
 }

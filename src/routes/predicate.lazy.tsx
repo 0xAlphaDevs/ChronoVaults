@@ -4,7 +4,7 @@ import { FuelLogo } from "../components/FuelLogo";
 import { Input } from "../components/Input";
 import { Link } from "../components/Link";
 import { useActiveWallet } from "../hooks/useActiveWallet";
-import { TimeLockPredicate } from "../sway-api/predicates/index";
+import { SpendingBudgetPredicate } from "../sway-api/predicates/index";
 import { FAUCET_LINK } from "../lib";
 import { BN, InputValue, Predicate } from "fuels";
 import { bn } from "fuels";
@@ -30,15 +30,31 @@ function Index() {
   useAsync(async () => {
     if (wallet) {
       baseAssetId = wallet.provider.getBaseAssetId();
-      // Initialize a new predicate instance with receiver and deadline
+      // // Initialize a new Time Lock predicate instance with receiver and deadline
+      // const configurable = {
+      //   RECEIVER: {
+      //     bits: "0xf1462bc68ea62dd89921498b949ab8bdec694fdd184ba466517b0c2eeb26b1c0",
+      //   },
+      //   DEADLINE: 1727413991, // convert to unix timestamp from selected data
+      // };
+      // // Initialize a new predicate instance
+      // const predicate = new TimeLockPredicate({
+      //   provider: wallet.provider,
+      //   configurableConstants: configurable,
+      // });
+
+      // Initialize a new Spending Budget predicate instance {}
       const configurable = {
         RECEIVER: {
-          bits: "0xf1462bc68ea62dd89921498b949ab8bdec694fdd184ba466517b0c2eeb26b1c0",
+          bits: wallet.address.toB256(),
         },
-        DEADLINE: 1727413991,
+        AMOUNT: 0.001 * 10 ** 8,
+        START_TIME: 1727456527,
+        TIME_PERIOD: 600,
       };
       // Initialize a new predicate instance
-      const predicate = new TimeLockPredicate({
+      console.log("Initializing Spending Budget Predicate...", configurable);
+      const predicate = new SpendingBudgetPredicate({
         provider: wallet.provider,
         configurableConstants: configurable,
       });
@@ -54,18 +70,20 @@ function Index() {
 
   const transferFundsToPredicate = async (amount: BN) => {
     try {
-      console.log("Transferring funds to predicate...");
-      console.log("Predicate: ", predicate);
-      console.log("Predicate address", predicate?.address);
       if (!predicate) {
         return toast.error("Predicate not loaded");
       }
 
-      console.log("Wallet: ", wallet);
-
       if (!wallet) {
         return toast.error("Wallet not loaded");
       }
+
+      console.log(
+        "Transferring funds to predicate...",
+        predicate.address,
+        amount,
+        baseAssetId
+      );
 
       await wallet.transfer(predicate.address, amount, baseAssetId, {
         gasLimit: 10_000,
@@ -88,7 +106,61 @@ function Index() {
     }
   };
 
-  const unlockPredicateAndTransferFundsBack = async (amount: BN) => {
+  // const unlockPredicateAndTransferFundsBack = async (amount: BN) => {
+  //   try {
+  //     if (!wallet) {
+  //       return toast.error("Wallet not loaded");
+  //     }
+
+  //     // Initialize a new predicate instance with receiver and deadline
+  //     const configurable = {
+  //       RECEIVER: {
+  //         bits: "0xf1462bc68ea62dd89921498b949ab8bdec694fdd184ba466517b0c2eeb26b1c0",
+  //       },
+  //       DEADLINE: 1727413991,
+  //     };
+  //     const reInitializePredicate = new TimeLockPredicate({
+  //       provider: wallet.provider,
+  //       configurableConstants: configurable,
+  //       data: [configurable.RECEIVER, 1727413992],
+  //     });
+
+  //     if (!reInitializePredicate) {
+  //       return toast.error("Failed to initialize predicate");
+  //     }
+
+  //     /*
+  //       Try to 'unlock' the predicate and transfer the funds back to the wallet.
+  //       If the pin is correct, this transfer transaction will succeed.
+  //       If the pin is incorrect, this transaction will fail.
+  //      */
+  //     const tx = await reInitializePredicate.transfer(
+  //       wallet.address,
+  //       amount,
+  //       baseAssetId
+  //     );
+  //     const { isStatusSuccess } = await tx.wait();
+
+  //     if (!isStatusSuccess) {
+  //       toast.error("Failed to unlock predicate");
+  //     }
+
+  //     if (isStatusSuccess) {
+  //       toast.success("Predicate unlocked");
+  //     }
+
+  //     await refreshBalances();
+  //   } catch (e) {
+  //     console.error(e);
+  //     toast.error(
+  //       "Failed to unlock predicate. You probably entered the wrong pin, or the predicate does not have enough balance. Try again."
+  //     );
+  //   }
+  // };
+
+  const unlockSpendingBudgetPredicateAndTransferFundsBack = async (
+    amount: number
+  ) => {
     try {
       if (!wallet) {
         return toast.error("Wallet not loaded");
@@ -97,14 +169,23 @@ function Index() {
       // Initialize a new predicate instance with receiver and deadline
       const configurable = {
         RECEIVER: {
-          bits: "0xf1462bc68ea62dd89921498b949ab8bdec694fdd184ba466517b0c2eeb26b1c0",
+          bits: wallet.address.toB256(),
         },
-        DEADLINE: 1727413991,
+        AMOUNT: 0.001 * 10 ** 8,
+        START_TIME: 1727456527,
+        TIME_PERIOD: 600,
       };
-      const reInitializePredicate = new TimeLockPredicate({
+
+      console.log(amount);
+
+      const reInitializePredicate = new SpendingBudgetPredicate({
         provider: wallet.provider,
         configurableConstants: configurable,
-        data: [configurable.RECEIVER, 1727413992],
+        data: [
+          configurable.RECEIVER,
+          amount * 10 ** 8,
+          configurable.START_TIME + 600,
+        ],
       });
 
       if (!reInitializePredicate) {
@@ -118,7 +199,7 @@ function Index() {
        */
       const tx = await reInitializePredicate.transfer(
         wallet.address,
-        amount,
+        bn.parseUnits(amount.toString()),
         baseAssetId
       );
       const { isStatusSuccess } = await tx.wait();
@@ -172,14 +253,15 @@ function Index() {
           await transferFundsToPredicate(bn.parseUnits("0.001"))
         }
       >
-        Transfer 0.1 ETH to Predicate
+        Transfer 0.001 ETH to Time Lock Predicate
       </Button> */}
+
       <Button
         onClick={async () =>
           await transferFundsToPredicate(bn.parseUnits("0.001"))
         }
       >
-        Transfer 0.001 ETH to Time Lock Predicate
+        Transfer 0.001 ETH to Spending Budget Predicate
       </Button>
 
       <Input
@@ -189,12 +271,20 @@ function Index() {
         placeholder="Hint - the correct pin is 1337"
       />
 
-      <Button
+      {/* <Button
         onClick={async () =>
           await unlockPredicateAndTransferFundsBack(bn.parseUnits("0.0009"))
         }
       >
         Unlock Predicate and Transfer 0.0009 ETH back to Wallet
+      </Button> */}
+
+      <Button
+        onClick={async () =>
+          await unlockSpendingBudgetPredicateAndTransferFundsBack(0.0009)
+        }
+      >
+        Unlock Spending Budget Predicate and Transfer 0.00099 ETH back to Wallet
       </Button>
 
       <span className="mt-8 w-[400px] text-gray-400">

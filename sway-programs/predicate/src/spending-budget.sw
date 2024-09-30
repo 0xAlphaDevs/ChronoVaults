@@ -14,5 +14,6 @@ configurable {
 }
 
 fn main(receiver: Address,amount: u64, current_time: u64) -> bool { 
-    amount <= ((current_time - START_TIME) / TIME_PERIOD) * AMOUNT && receiver == RECEIVER
+    let allowed_amount = AMOUNT * (current_time - START_TIME) / TIME_PERIOD;
+    receiver == RECEIVER && amount <= allowed_amount
 }

@@ -1,19 +1,12 @@
-'use client'
+"use client";
 
-import { createLazyFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { Sidebar } from '@/components/Sidebar'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { createLazyFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Sidebar } from "@/components/Sidebar";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -22,70 +15,73 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Progress } from '@/components/ui/progress'
-import {
-  DollarSign,
-  PiggyBank,
-  TrendingUp,
-  CirclePlusIcon,
-  User,
-  Clock10Icon,
-} from 'lucide-react'
+} from "@/components/ui/dialog";
+import { DollarSign, CirclePlusIcon, User } from "lucide-react";
+import TimeLockVaultCard from "@/components/TimeLockVaultCard";
 
-export const Route = createLazyFileRoute('/time-lock')({
+export const Route = createLazyFileRoute("/time-lock")({
   component: Index,
-})
+});
+
+interface TimeLockVault {
+  id: number;
+  name: string;
+  saved: number;
+  vaultGoal: number;
+  lockPeriod: number;
+  createdAt: Date;
+}
 
 // Mock data for time-locked vaults
-const mockTimeLockVaults = [
+const mockTimeLockVaults: TimeLockVault[] = [
   {
     id: 1,
-    name: "Vacation Savings",
-    amount: 1000,
+    name: "College Fund",
+    saved: 1000,
+    vaultGoal: 1000,
     lockPeriod: 30, // lock period in days
     createdAt: new Date("2024-01-01"),
   },
   {
     id: 2,
-    name: "Emergency Fund",
-    amount: 500,
+    name: "Retirement Fund",
+    saved: 5000,
+    vaultGoal: 10000,
     lockPeriod: 90, // lock period in days
     createdAt: new Date("2024-02-01"),
   },
 ];
 
-
 function Index() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState<{
     vaultName: string;
     receiver: string;
     amount: string;
     lockDate: string | undefined;
   }>({
-    vaultName: '',
-    receiver: '',
-    amount: '',
+    vaultName: "",
+    receiver: "",
+    amount: "",
     lockDate: undefined,
-  })
+  });
 
   // Function to handle vault form input changes
   const handleVaultFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
+    const { id, value } = e.target;
     setVaultForm((prev) => ({
       ...prev,
       [id]: value,
-    }))
-  }
+    }));
+  };
 
   // Function to handle vault creation
   const handleCreateVault = () => {
-    console.log('Vault Data: ', vaultForm)
-    setIsDialogOpen(false)
-  }
+    console.log("Vault Data: ", vaultForm);
+    setIsDialogOpen(false);
+  };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <>
@@ -107,7 +103,8 @@ function Index() {
                 <DialogHeader>
                   <DialogTitle>Create Time Lock Vault</DialogTitle>
                   <DialogDescription>
-                    Set up a new time lock vault with name, receiver, amount, and lock date.
+                    Set up a new time lock vault with name, receiver, amount,
+                    and lock date.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -162,14 +159,12 @@ function Index() {
                     <Input
                       id="lockDate"
                       type="date" // Change to type="date"
-                      value={vaultForm.lockDate || ''} // Set to empty string if undefined
+                      value={vaultForm.lockDate || ""} // Set to empty string if undefined
                       onChange={handleVaultFormChange}
                       min={today}
                       required
                     />
                   </div>
-
-
                 </div>
                 <DialogFooter>
                   <Button
@@ -182,56 +177,14 @@ function Index() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
             {mockTimeLockVaults.map((vault) => (
-              <Card
-                key={vault.id}
-                className="overflow-hidden transition-shadow duration-300 hover:shadow-lg"
-              >
-                <CardHeader className="bg-gradient-to-r from-yellow-200 to-green-600 text-black">
-                  <CardTitle className="flex items-center">
-                    <Clock10Icon className="mr-2 h-6 w-6" />
-                    {vault.name}
-                  </CardTitle>
-                  <CardDescription className="text-black">
-                    Amount: ${vault.amount}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-500">
-                        Spent
-                      </span>
-                      <span className="text-lg font-semibold text-gray-700">
-                        ${vault.spent}
-                      </span>
-                    </div>
-                    <Progress
-                      value={(vault.spent / vault.limit) * 100}
-                      className="h-2 bg-gray-200"
-                    />
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">Progress</span>
-                      <span className="font-medium text-gray-700">
-                        {Math.round((vault.spent / vault.limit) * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <TrendingUp className="mr-2 h-4 w-4 text-blue-500" />
-                      <span>Weekly limit: {vault.weeklyPercentage}%</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-gray-50 border-t flex items-center gap-8">
-                </CardFooter>
-              </Card>
+              <TimeLockVaultCard vault={vault} />
             ))}
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }
