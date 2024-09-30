@@ -17,12 +17,11 @@ import {
 //   fill: string;
 // }
 
-const chartData = [
-  { browser: "Asset 1", visitors: 200, fill: "var(--color-chrome)" },
-  { browser: "Asset 2", visitors: 100, fill: "var(--color-safari)" },
-  { browser: "Asset 3", visitors: 500, fill: "var(--color-firefox)" },
-  { browser: "other", visitors: 5000, fill: "var(--color-other)" },
-];
+interface ChartData {
+  browser: string;
+  visitors: number | string;
+  fill: string;
+}
 
 const chartConfig = {
   visitors: {
@@ -50,11 +49,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export const AssetDistributionChart: React.FC = () => {
+export const AssetDistributionChart = ({
+  chartData,
+}: {
+  chartData: ChartData[];
+}) => {
   const totalVisitors = React.useMemo(() => {
+    //@ts-expect-error - reduce is not defined in the type
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
-
   return (
     <Card className="flex flex-col bg-inherit border-none">
       <CardContent className="flex-1 pb-0">
@@ -72,7 +75,7 @@ export const AssetDistributionChart: React.FC = () => {
               dataKey="visitors"
               nameKey="browser"
               innerRadius={70}
-              strokeWidth={5}
+              strokeWidth={8}
             >
               <Label
                 content={({ viewBox }) => {
@@ -88,9 +91,9 @@ export const AssetDistributionChart: React.FC = () => {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className=" text-white text-3xl font-bold"
+                          className=" text-white text-2xl font-bold"
                         >
-                          ${totalVisitors.toLocaleString()}
+                          ${totalVisitors.toFixed(2)}
                         </tspan>
                         <tspan
                           x={viewBox.cx}

@@ -21,7 +21,6 @@ import { useConnectUI } from "@fuels/react";
 import { useBrowserWallet } from "../hooks/useBrowserWallet";
 import { Sidebar } from "@/components/Sidebar";
 
-
 export const Route = createLazyFileRoute("/")({
   component: Index,
 });
@@ -39,7 +38,6 @@ function Index() {
   const { isConnected: isBrowserWalletConnected } = useBrowserWallet();
   const { connect } = useConnectUI();
   // const { disconnect } = useDisconnect();
-
 
   /**
    * useAsync is a wrapper around useEffect that allows us to run asynchronous code
@@ -93,10 +91,13 @@ function Index() {
           <img src="/logo.png" alt="fuel" className="w-20 h-20" />
           <h1 className="text-3xl font-semibold">Welcome to Chrono Vaults</h1>
           <span className="text-gray-400 font-semibold">
-            Chrono Vaults is a financial management and asset transfer system using predicates on Fuel.
+            Chrono Vaults is a financial management and asset transfer system
+            using predicates on Fuel.
           </span>
 
-          <Button onClick={connect} className="font-bold text-xl mt-4">Connect Wallet</Button>
+          <Button onClick={connect} className="font-bold text-xl mt-4">
+            Connect Wallet
+          </Button>
           <div className="grid grid-cols-3 gap-8 px-20 mt-20">
             <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
               <CardHeader>
@@ -137,13 +138,15 @@ function Index() {
           <Sidebar />
           <div className="flex flex-col gap-4 items-center mt-60 pl-40">
             <h2 className="text-5xl font-semibold">This is Chrono Vaults</h2>
-            <p className="text-3xl">Now you can create vaults using our platform</p>
-            <p className="text-lg">Navigate to any route to create your desidred vaults</p>
+            <p className="text-3xl">
+              Manage your onchain assets using predicates on Fuel.
+            </p>
+            <p className="text-lg">
+              Select your desired vault from the left panel.
+            </p>
           </div>
-
         </>
       )}
-
 
       {/*
       <>

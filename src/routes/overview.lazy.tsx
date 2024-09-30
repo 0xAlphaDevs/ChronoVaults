@@ -12,6 +12,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import { AssetDistributionChart } from "@/components/AssetDistributionChart";
 import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
+import { getAssetDetails } from "@/lib/assets";
+import { HermesClient } from "@pythnetwork/hermes-client";
+
+interface WalletBalance {
+  symbol: string;
+  logo: string;
+  balance: number | string;
+  value?: number;
+}
+
+interface ChartData {
+  browser: string;
+  visitors: number;
+  fill: string;
+}
 
 const getTruncatedAddress = (address: string) => {
   return address.slice(0, 6) + "..." + address.slice(-4);
@@ -22,19 +38,109 @@ export const Route = createLazyFileRoute("/overview")({
 });
 
 function Index() {
-  // const chartData = [
-  //   { browser: "Asset 1", visitors: 200, fill: "var(--color-chrome)" },
-  //   { browser: "Asset 2", visitors: 100, fill: "var(--color-safari)" },
-  //   { browser: "Asset 3", visitors: 500, fill: "var(--color-firefox)" },
-  //   { browser: "other", visitors: 5000, fill: "var(--color-other)" },
-  // ];
-  // Data for pie chart
   const { wallet, walletBalance } = useActiveWallet();
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [tokenBalances, setTokenBalances] = useState<WalletBalance[]>([]);
+  const [nftBalances, setNftBalances] = useState<WalletBalance[]>([]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Address copied to clipboard");
   };
+
+  const fetchPriceUpdateDataAndGetBalances = async () => {
+    const connection = new HermesClient("https://hermes.pyth.network/");
+
+    const ETH_PRICE_FEED_ID =
+      "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"; // ETH/USD
+    const BTC_PRICE_FEED_ID =
+      "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+
+    // Latest price updates
+    const ethPriceUpdates = await connection.getLatestPriceUpdates([
+      ETH_PRICE_FEED_ID,
+    ]);
+    const btcPriceUpdates = await connection.getLatestPriceUpdates([
+      BTC_PRICE_FEED_ID,
+    ]);
+
+    //@ts-expect-error - price is not defined in the type
+    const btcPrice = btcPriceUpdates.parsed[0].price.price / 10 ** 8;
+    //@ts-expect-error - price is not defined in the type
+    const ethPrice = ethPriceUpdates.parsed[0].price.price / 10 ** 8;
+
+    await getBalances(ethPrice, btcPrice);
+  };
+
+  async function getBalances(ethPrice: number, btcPrice: number) {
+    await wallet?.getBalances().then((balances) => {
+      // console.log(balances.balances);
+      balances.balances.forEach((balance) => {
+        const asset = getAssetDetails(balance.assetId);
+        if (!asset) return;
+        if (asset.assetType === "token") {
+          const usdValue =
+            asset.symbol == "ETH"
+              ? Number(balance.amount.formatUnits(asset.decimals)) * ethPrice
+              : asset.symbol == "BTC"
+                ? Number(balance.amount.formatUnits(asset.decimals)) * btcPrice
+                : Number(balance.amount.formatUnits(asset.decimals)) * 1;
+          setTokenBalances((prev) => {
+            const exists = prev.some((item) => item.symbol === asset.symbol);
+            if (exists) {
+              return prev;
+            }
+
+            return [
+              ...prev,
+              {
+                symbol: asset.symbol,
+                logo: asset.logo,
+                balance: balance.amount.formatUnits(asset.decimals),
+                value: usdValue,
+              },
+            ];
+          });
+          setChartData((prev) => {
+            const exists = prev.some((item) => item.browser === asset.symbol);
+            if (exists) {
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                browser: asset.symbol,
+                visitors: usdValue,
+                fill: asset.fill,
+              },
+            ];
+          });
+        } else {
+          setNftBalances((prev) => {
+            const exists = prev.some((item) => item.symbol === asset.symbol);
+            if (exists) {
+              return prev;
+            }
+
+            return [
+              ...prev,
+              {
+                symbol: asset.symbol,
+                logo: asset.logo,
+                balance: balance.amount.toNumber(),
+              },
+            ];
+          });
+        }
+      });
+    });
+  }
+
+  useEffect(() => {
+    if (wallet) {
+      fetchPriceUpdateDataAndGetBalances();
+    }
+  }, [wallet]);
 
   return (
     <>
@@ -73,62 +179,10 @@ function Index() {
               )}
             </div>
           </div>
+
           <div className="w-[40%]">
-            <AssetDistributionChart />
+            <AssetDistributionChart chartData={chartData} />
           </div>
-          {/* <Card className="flex flex-col bg-inherit border-none">
-            <CardContent className="flex-1 pb-0">
-              <ChartContainer
-                config={chartConfig}
-                className="mx-auto aspect-square max-h-[250px] "
-              >
-                <PieChart>
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Pie
-                    data={chartData}
-                    dataKey="visitors"
-                    nameKey="browser"
-                    innerRadius={70}
-                    strokeWidth={5}
-                  >
-                    <Label
-                      content={({ viewBox }) => {
-                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                          return (
-                            <text
-                              x={viewBox.cx}
-                              y={viewBox.cy}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              className=" fill-white"
-                            >
-                              <tspan
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                className=" text-white text-3xl font-bold"
-                              >
-                                ${totalVisitors.toLocaleString()}
-                              </tspan>
-                              <tspan
-                                x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 24}
-                                className="fill-white text-white"
-                              >
-                                Portfolio Value
-                              </tspan>
-                            </text>
-                          );
-                        }
-                      }}
-                    />
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card> */}
         </div>
         {/* Tabs for Assets, NFTs, Activity */}
         <div className=" border rounded-lg shadow-md p-4 border-none">
@@ -141,60 +195,50 @@ function Index() {
             <TabsContent value="assets">
               <div className="mt-4 flex flex-col gap-4">
                 {/* Token List under Assets */}
-                <div className="flex justify-between p-4 border border-gray-500 bg-gray-200 bg-opacity-15 rounded-lg shadow-md">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/logo.png"
-                      alt="Starknet"
-                      className="h-6 w-6 rounded-full"
-                    />
-                    <div>
-                      <h3>ETH</h3>
+                {tokenBalances.map((balance) => (
+                  <div className="flex justify-between p-4 border border-gray-500 bg-gray-200 bg-opacity-15 rounded-lg shadow-md">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={balance.logo}
+                        alt="Starknet"
+                        className="h-6 w-6 rounded-full"
+                      />
+                      <div>
+                        <h3>{balance.symbol}</h3>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p>
+                        Balance : {balance.balance} {balance.symbol}
+                      </p>
+                      <p>Value : ${balance.value?.toFixed(3)}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p>Balance : 0.4997 ETH</p>
-                    <p>Value : $2,300</p>
-                  </div>
-                </div>
-                <div className="flex justify-between p-4 border border-gray-500 bg-gray-200 bg-opacity-15 rounded-lg shadow-md">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/logo.png"
-                      alt="Starknet"
-                      className="h-6 w-6 rounded-full"
-                    />
-                    <div>
-                      <h3>ETH</h3>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p>Balance : 0.4997 ETH</p>
-                    <p>Value : $2,300</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </TabsContent>
 
             <TabsContent value="nfts">
               <div className="mt-4 flex flex-col gap-4">
                 {/* Token List under Assets */}
-                <div className="flex justify-between p-4 border border-gray-500 bg-gray-200 bg-opacity-15 rounded-lg shadow-md">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/logo.png"
-                      alt="Starknet"
-                      className="h-6 w-6 rounded-full"
-                    />
-                    <div>
-                      <h3>APE NFT</h3>
+                {nftBalances.map((balance) => (
+                  <div className="flex justify-between p-4 border border-gray-500 bg-gray-200 bg-opacity-15 rounded-lg shadow-md">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={balance.logo}
+                        alt="Starknet"
+                        className="h-6 w-6 rounded-full"
+                      />
+                      <div>
+                        <h3>{balance.symbol}</h3>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p>Quantity : {balance.balance} </p>
+                      {/* <p>Value : $2,300</p> */}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p>Floor Price : 0.4997 ETH</p>
-                    <p>Value : $2,300</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </TabsContent>
           </Tabs>
