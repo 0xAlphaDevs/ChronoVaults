@@ -132,6 +132,13 @@ export const Sidebar: FC = () => {
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                 <a
+                  href="/overview"
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/conditional-release" ? "bg-green-600" : ""
+                    }`}
+                >
+                  <span>Overview</span>
+                </a>
+                <a
                   href="/spending-budget"
                   className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/spending-budget" ? "bg-green-600" : ""
                     }`}
@@ -154,6 +161,8 @@ export const Sidebar: FC = () => {
                 >
                   <span>Conditional Release Vaults</span>
                 </a>
+
+
               </nav>
 
 

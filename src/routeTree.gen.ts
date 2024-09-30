@@ -20,6 +20,7 @@ const TimeLockLazyImport = createFileRoute('/time-lock')()
 const SpendingBudgetLazyImport = createFileRoute('/spending-budget')()
 const ScriptLazyImport = createFileRoute('/script')()
 const PredicateLazyImport = createFileRoute('/predicate')()
+const OverviewLazyImport = createFileRoute('/overview')()
 const FaucetLazyImport = createFileRoute('/faucet')()
 const ConditionalReleaseLazyImport = createFileRoute('/conditional-release')()
 const IndexLazyImport = createFileRoute('/')()
@@ -47,6 +48,11 @@ const PredicateLazyRoute = PredicateLazyImport.update({
   path: '/predicate',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/predicate.lazy').then((d) => d.Route))
+
+const OverviewLazyRoute = OverviewLazyImport.update({
+  path: '/overview',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/overview.lazy').then((d) => d.Route))
 
 const FaucetLazyRoute = FaucetLazyImport.update({
   path: '/faucet',
@@ -90,6 +96,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaucetLazyImport
       parentRoute: typeof rootRoute
     }
+    '/overview': {
+      id: '/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof OverviewLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/predicate': {
       id: '/predicate'
       path: '/predicate'
@@ -127,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
   '/conditional-release': typeof ConditionalReleaseLazyRoute
   '/faucet': typeof FaucetLazyRoute
+  '/overview': typeof OverviewLazyRoute
   '/predicate': typeof PredicateLazyRoute
   '/script': typeof ScriptLazyRoute
   '/spending-budget': typeof SpendingBudgetLazyRoute
@@ -137,6 +151,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/conditional-release': typeof ConditionalReleaseLazyRoute
   '/faucet': typeof FaucetLazyRoute
+  '/overview': typeof OverviewLazyRoute
   '/predicate': typeof PredicateLazyRoute
   '/script': typeof ScriptLazyRoute
   '/spending-budget': typeof SpendingBudgetLazyRoute
@@ -148,6 +163,7 @@ export interface FileRoutesById {
   '/': typeof IndexLazyRoute
   '/conditional-release': typeof ConditionalReleaseLazyRoute
   '/faucet': typeof FaucetLazyRoute
+  '/overview': typeof OverviewLazyRoute
   '/predicate': typeof PredicateLazyRoute
   '/script': typeof ScriptLazyRoute
   '/spending-budget': typeof SpendingBudgetLazyRoute
@@ -160,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/conditional-release'
     | '/faucet'
+    | '/overview'
     | '/predicate'
     | '/script'
     | '/spending-budget'
@@ -169,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/conditional-release'
     | '/faucet'
+    | '/overview'
     | '/predicate'
     | '/script'
     | '/spending-budget'
@@ -178,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/conditional-release'
     | '/faucet'
+    | '/overview'
     | '/predicate'
     | '/script'
     | '/spending-budget'
@@ -189,6 +208,7 @@ export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
   ConditionalReleaseLazyRoute: typeof ConditionalReleaseLazyRoute
   FaucetLazyRoute: typeof FaucetLazyRoute
+  OverviewLazyRoute: typeof OverviewLazyRoute
   PredicateLazyRoute: typeof PredicateLazyRoute
   ScriptLazyRoute: typeof ScriptLazyRoute
   SpendingBudgetLazyRoute: typeof SpendingBudgetLazyRoute
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
   ConditionalReleaseLazyRoute: ConditionalReleaseLazyRoute,
   FaucetLazyRoute: FaucetLazyRoute,
+  OverviewLazyRoute: OverviewLazyRoute,
   PredicateLazyRoute: PredicateLazyRoute,
   ScriptLazyRoute: ScriptLazyRoute,
   SpendingBudgetLazyRoute: SpendingBudgetLazyRoute,
@@ -220,6 +241,7 @@ export const routeTree = rootRoute
         "/",
         "/conditional-release",
         "/faucet",
+        "/overview",
         "/predicate",
         "/script",
         "/spending-budget",
@@ -234,6 +256,9 @@ export const routeTree = rootRoute
     },
     "/faucet": {
       "filePath": "faucet.lazy.tsx"
+    },
+    "/overview": {
+      "filePath": "overview.lazy.tsx"
     },
     "/predicate": {
       "filePath": "predicate.lazy.tsx"
