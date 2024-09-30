@@ -60,12 +60,14 @@ function Index() {
                       }
                     />
                   </div>
-                  <span data-testid="wallet-balance" className="text-gray-400">
-                    Balance:{" "}
+                  <span
+                    data-testid="wallet-balance"
+                    className="text-gray-400 text-lg "
+                  >
+                    ETH Balance :{" "}
                     {walletBalance?.format({
                       precision: 3,
                     })}{" "}
-                    ETH
                   </span>
                 </div>
               )}

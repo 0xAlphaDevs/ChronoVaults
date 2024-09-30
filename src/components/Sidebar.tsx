@@ -15,7 +15,6 @@ import toast from "react-hot-toast";
 export const Sidebar: FC = () => {
   // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
   const { faucetWallet } = useFaucet();
 
   const {
@@ -113,69 +112,66 @@ export const Sidebar: FC = () => {
         <div className="hidden md:block">
           <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <a
-                href="/"
-                className="flex items-center gap-4 font-bold"
-
-              >
+              <a href="/" className="flex items-center gap-4 font-bold">
                 <img
                   src="/logo.png"
                   width={30}
                   height={30}
                   alt="Picture of the author"
                 />
-                <span className="text-2xl">
-                  Chrono Vaults
-                </span>
+                <span className="text-2xl">Chrono Vaults</span>
               </a>
             </div>
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                 <a
                   href="/overview"
-                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/overview" ? "bg-green-600" : ""
-                    }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${
+                    location.pathname === "/overview" ? "bg-green-600" : ""
+                  }`}
                 >
                   <span>Overview</span>
                 </a>
                 <a
                   href="/spending-budget"
-                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/spending-budget" ? "bg-green-600" : ""
-                    }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${
+                    location.pathname === "/spending-budget"
+                      ? "bg-green-600"
+                      : ""
+                  }`}
                 >
                   <span>Spending Budget Vaults</span>
                 </a>
 
                 <a
                   href="/time-lock"
-                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/time-lock" ? "bg-green-600" : ""
-                    }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${
+                    location.pathname === "/time-lock" ? "bg-green-600" : ""
+                  }`}
                 >
                   <span>Time Lock Vaults</span>
                 </a>
 
                 <a
                   href="/conditional-release"
-                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${location.pathname === "/conditional-release" ? "bg-green-600" : ""
-                    }`}
+                  className={`flex items-center gap-3 rounded-lg px-3 text-lg py-2 my-2 transition-all hover:bg-green-500 ${
+                    location.pathname === "/conditional-release"
+                      ? "bg-green-600"
+                      : ""
+                  }`}
                 >
                   <span>Conditional Release Vaults</span>
                 </a>
-
-
               </nav>
-
-
             </div>
             <div className="pb-12 flex flex-col gap-4">
-
               {showAddNetworkButton && (
                 <Button onClick={tryToAddNetwork} className="bg-red-500">
                   Wrong Network
                 </Button>
               )}
 
-              <div className="ml-auto">
+              <div className="w-full">
                 <WalletDisplay />
               </div>
 
@@ -185,10 +181,6 @@ export const Sidebar: FC = () => {
               {!isBrowserWalletConnected && (
                 <Button onClick={connect}>Connect Wallet</Button>
               )}
-
-
-
-
 
               {showTopUpButton && (
                 <Button onClick={() => topUpWallet()}>Top-up Wallet</Button>

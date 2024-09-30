@@ -11,13 +11,13 @@ const copyToClipboard = (text: string) => {
 };
 
 export const WalletDisplay = () => {
-  const { wallet, walletBalance } = useActiveWallet();
+  const { wallet } = useActiveWallet();
 
   return (
     wallet && (
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 justify-center">
         <span className="text-gray-400">
-          {getTruncatedAddress(wallet.address.toB256() as string)}
+          Wallet : {getTruncatedAddress(wallet.address.toB256() as string)}
         </span>
         <img
           src="/copy.svg"
@@ -25,13 +25,13 @@ export const WalletDisplay = () => {
           className="cursor-pointer h-5 hover:opacity-80 active:scale-[90%]"
           onClick={() => copyToClipboard(wallet.address.toB256() as string)}
         />
-        <span data-testid="wallet-balance" className="text-gray-400">
+        {/* <span data-testid="wallet-balance" className="text-gray-400">
           Balance:{" "}
           {walletBalance?.format({
             precision: 3,
           })}{" "}
           ETH
-        </span>
+        </span> */}
       </div>
     )
   );
