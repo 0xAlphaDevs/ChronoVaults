@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 
 import { Label, Pie, PieChart } from "recharts";
@@ -12,7 +11,11 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-export const description = "A donut chart with text";
+// interface ChartData {
+//   browser: string;
+//   visitors: number;
+//   fill: string;
+// }
 
 const chartData = [
   { browser: "Asset 1", visitors: 200, fill: "var(--color-chrome)" },
@@ -47,7 +50,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function AssetDistributionChart() {
+export const AssetDistributionChart: React.FC = () => {
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
@@ -107,4 +110,4 @@ export function AssetDistributionChart() {
       </CardContent>
     </Card>
   );
-}
+};
