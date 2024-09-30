@@ -54,10 +54,10 @@ export const AssetDistributionChart = ({
 }: {
   chartData: ChartData[];
 }) => {
-  const totalVisitors = React.useMemo(() => {
-    //@ts-expect-error - reduce is not defined in the type
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+  const totalVisitors = chartData.reduce(
+    (acc, { visitors }) => acc + Number(visitors),
+    0
+  );
   return (
     <Card className="flex flex-col bg-inherit border-none">
       <CardContent className="flex-1 pb-0">
