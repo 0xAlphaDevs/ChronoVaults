@@ -158,7 +158,7 @@ function Index() {
                         id="secret"
                         value={vaultForm.secret}
                         onChange={handleVaultFormChange}
-                        placeholder="25%"
+                        placeholder="******"
                         type="number"
                         max="100"
                         className="pl-10"
