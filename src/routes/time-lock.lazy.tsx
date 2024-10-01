@@ -63,12 +63,7 @@ const getTruncatedAddress = (address: string) => {
 function Index() {
   const { wallet } = useActiveWallet();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [vaultForm, setVaultForm] = useState<{
-    vaultName: string;
-    receiver: string;
-    amount: string;
-    unlockDate: string | undefined;
-  }>({
+  const [vaultForm, setVaultForm] = useState({
     vaultName: "",
     receiver: "",
     amount: "",
