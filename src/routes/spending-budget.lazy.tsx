@@ -15,8 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, Percent, CirclePlusIcon } from "lucide-react";
+import { DollarSign, CirclePlusIcon, User } from "lucide-react";
 import SpendingVaultCard from "@/components/SpendingVaultCard";
+import { useActiveWallet } from "../hooks/useActiveWallet";
+import toast from "react-hot-toast";
 
 export const Route = createLazyFileRoute("/spending-budget")({
   component: Index,
@@ -50,11 +52,13 @@ const mockSpendingVaults: SpendingVault[] = [
 ];
 
 function Index() {
+  const { wallet } = useActiveWallet();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState({
     vaultName: "",
-    monthlyLimit: "",
-    weeklyPercentage: "",
+    spendingLimit: "",
+    timePeriod: "",
+    receiver: wallet ? wallet.address.toB256() : "", // Initializing receiver with wallet address,
   });
 
   // Function to handle vault creation form input change
@@ -68,9 +72,36 @@ function Index() {
 
   // Function to handle vault creation
   const handleCreateVault = () => {
-    console.log("Vault Data: ", vaultForm);
+    const currentUnixTimestamp = Math.floor(Date.now() / 1000);
+    const timePeriodUnix = vaultForm.timePeriod
+      ? Math.floor(new Date(vaultForm.timePeriod).getTime() / 1000)
+      : null;
+
+    const vaultData = {
+      vaultName: vaultForm.vaultName,
+      spendingLimit: vaultForm.spendingLimit,
+      receiver: vaultForm.receiver,
+      timePeriod: timePeriodUnix,
+      createdAt: currentUnixTimestamp,
+    };
+
+    // Show success UI and log the data
+    toast.success("Vault Created Successfully!");
+
+    // Print the values to the console
+    console.log("Vault Data: ", vaultData);
+
+    // Reset form and close dialog
+    setVaultForm({
+      vaultName: "",
+      spendingLimit: "",
+      timePeriod: "",
+      receiver: wallet ? wallet.address.toB256() : "",
+    });
     setIsDialogOpen(false);
   };
+
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <>
@@ -107,12 +138,12 @@ function Index() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="monthlyLimit">Monthly Limit</Label>
+                    <Label htmlFor="spendingLimit">Spending Limit</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <Input
-                        id="monthlyLimit"
-                        value={vaultForm.monthlyLimit}
+                        id="spendingLimit"
+                        value={vaultForm.spendingLimit}
                         onChange={handleVaultFormChange}
                         placeholder="Enter amount"
                         type="number"
@@ -122,17 +153,27 @@ function Index() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="weeklyPercentage">Weekly Percentage</Label>
+                    <Label htmlFor="timePeriod">Time Period</Label>
+                    <Input
+                      id="timePeriod"
+                      type="date" // Change to type="date"
+                      value={vaultForm.timePeriod || ""} // Set to empty string if undefined
+                      onChange={handleVaultFormChange}
+                      min={today}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="receiver">Receiver Address</Label>
                     <div className="relative">
-                      <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <Input
-                        id="weeklyPercentage"
-                        value={vaultForm.weeklyPercentage}
+                        id="receiver"
+                        value={vaultForm.receiver}
                         onChange={handleVaultFormChange}
-                        placeholder="25%"
-                        type="number"
-                        max="100"
+                        placeholder="Enter receiver address"
                         className="pl-10"
+                        disabled
                         required
                       />
                     </div>
