@@ -1,7 +1,7 @@
 "use client";
 
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, Percent, CirclePlusIcon } from "lucide-react";
+import { DollarSign, CirclePlusIcon, User, KeyIcon } from "lucide-react";
 import ConditionalReleaseVaultCard from "@/components/ConditionalReleaseVaultCard";
+import { useActiveWallet } from "../hooks/useActiveWallet";
+import toast from "react-hot-toast";
 
 export const Route = createLazyFileRoute("/conditional-release")({
   component: Index,
@@ -48,13 +50,19 @@ const mockSpendingVaults: ConditionalReleaseVault[] = [
   },
 ];
 
+const getTruncatedAddress = (address: string) => {
+  return address.slice(0, 6) + "..." + address.slice(-4);
+};
+
+
 function Index() {
-  // let baseAssetId: string;
+  const { wallet } = useActiveWallet();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState({
     vaultName: "",
-    monthlyLimit: "",
-    weeklyPercentage: "",
+    amount: "",
+    secret: "",
+    receiver: "",
   });
 
   // Function to handle vault creation form input change
@@ -66,11 +74,32 @@ function Index() {
     }));
   };
 
-  // Function to handle vault creation
   const handleCreateVault = () => {
-    console.log("Vault Data: ", vaultForm);
+    const unixTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp
+
+    const newVault = {
+      vaultName: vaultForm.vaultName,
+      receiver: vaultForm.receiver,
+      amount: vaultForm.amount,
+      secret: vaultForm.secret,
+      createdAt: unixTimestamp,
+    };
+
+    console.log("Vault Created:", newVault); // Log the vault data
+
+    // Show a success toast
+    toast.success("Vault Created!");
+
+    // Close the dialog
     setIsDialogOpen(false);
   };
+
+  useEffect(() => {
+    setVaultForm((prev) => ({
+      ...prev,
+      receiver: wallet ? wallet.address.toB256() : "",
+    }));
+  }, [wallet]);
 
   return (
     <>
@@ -107,12 +136,12 @@ function Index() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="monthlyLimit">Monthly Limit</Label>
+                    <Label htmlFor="amount">Amount</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <Input
-                        id="monthlyLimit"
-                        value={vaultForm.monthlyLimit}
+                        id="amount"
+                        value={vaultForm.amount}
                         onChange={handleVaultFormChange}
                         placeholder="Enter amount"
                         type="number"
@@ -122,12 +151,12 @@ function Index() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="weeklyPercentage">Weekly Percentage</Label>
+                    <Label htmlFor="secret">Secret</Label>
                     <div className="relative">
-                      <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <Input
-                        id="weeklyPercentage"
-                        value={vaultForm.weeklyPercentage}
+                        id="secret"
+                        value={vaultForm.secret}
                         onChange={handleVaultFormChange}
                         placeholder="25%"
                         type="number"
@@ -137,6 +166,22 @@ function Index() {
                       />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="receiver">Receiver Address</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Input
+                        id="receiver"
+                        value={getTruncatedAddress(vaultForm.receiver)}
+                        onChange={handleVaultFormChange}
+                        placeholder="Enter receiver address"
+                        className="pl-10"
+                        disabled
+                        required
+                      />
+                    </div>
+                  </div>
+
                 </div>
                 <DialogFooter>
                   <Button
