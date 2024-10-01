@@ -20,7 +20,7 @@ import SpendingVaultCard from "@/components/SpendingVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import { SpendingBudgetPredicate } from "../sway-api/predicates/index";
 import toast from "react-hot-toast";
-import { Provider } from "fuels";
+import { bn, Provider } from "fuels";
 
 export const Route = createLazyFileRoute("/spending-budget")({
   component: Index,
@@ -32,7 +32,10 @@ interface SpendingVault {
   name: string;
   limit: number;
   weeklyPercentage: number;
-  spent: number;
+  startTime: number;
+  endTime: number;
+  timePeriod: number;
+  predicate: SpendingBudgetPredicate;
   predicateAddress?: string;
   daysLeft?: number;
 }
@@ -73,12 +76,12 @@ function Index() {
   };
 
   // get spending vaults from local storage and refresh
-  function refreshVaults() {
+  async function refreshVaults() {
     const vaults = JSON.parse(
       localStorage.getItem("spending-budget-vaults") || "[]"
     );
 
-    console.log("Vaults: ", vaults);
+    // console.log("Vaults: ", vaults);
     const spendingVaults: SpendingVault[] = [];
 
     vaults.forEach((vault: SpendingBudgetVault, index: number) => {
@@ -92,22 +95,26 @@ function Index() {
         TIME_PERIOD: vault.timePeriod,
       };
 
-      // send test eth to the predicate
       const predicate = new SpendingBudgetPredicate({
         provider: wallet?.provider as Provider,
         configurableConstants: configurable,
       });
-      console.log("Predicate: ", predicate.address, vault.vaultName);
+
+      // console.log("Predicate: ", predicate.address, vault.vaultName);
+
       spendingVaults.push({
         id: index,
         name: vault.vaultName,
         limit: Number(vault.spendingLimit),
         weeklyPercentage: 0,
+        predicate: predicate,
         predicateAddress: predicate.address.toB256(),
+        startTime: vault.startTime,
+        endTime: vault.endTime,
+        timePeriod: vault.timePeriod,
         daysLeft: Math.floor(
           (vault.endTime - Math.floor(Date.now() / 1000)) / 86400
         ),
-        spent: 80,
       });
     });
     setSpendingVaults(spendingVaults);
@@ -130,10 +137,10 @@ function Index() {
       createdAt: currentUnixTimestamp,
     };
 
-    console.log("Vault Data: ", vaultData);
+    // console.log("Vault Data: ", vaultData);
     try {
       if (wallet) {
-        // const baseAssetId: string = wallet.provider.getBaseAssetId();
+        const baseAssetId: string = wallet.provider.getBaseAssetId();
         const configurable = {
           RECEIVER: {
             bits: wallet.address.toB256(),
@@ -148,19 +155,26 @@ function Index() {
           provider: wallet?.provider as Provider,
           configurableConstants: configurable,
         });
-        console.log("Predicate: ", predicate.address, vaultData.vaultName);
+        // console.log("Predicate: ", predicate.address, vaultData.vaultName);
 
-        // await wallet.transfer(
-        //   predicate.address,
-        //   bn.parseUnits("0.0001"),
-        //   baseAssetId,
-        //   {
-        //     gasLimit: 10_000,
-        //   }
-        // );
+        const tx = await wallet.transfer(
+          predicate.address,
+          bn.parseUnits("0.0001"),
+          baseAssetId,
+          {
+            gasLimit: 10_000,
+          }
+        );
 
-        // Show success UI and log the data
-        toast.success(`${vaultForm.vaultName} Vault Created`);
+        const { isStatusSuccess } = await tx.wait();
+
+        if (!isStatusSuccess) {
+          toast.error("Failed to create vault");
+        }
+
+        if (isStatusSuccess) {
+          toast.success(`${vaultData.vaultName} vault created`);
+        }
 
         // save to localstorage
         const vaults = JSON.parse(

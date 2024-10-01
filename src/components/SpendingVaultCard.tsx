@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -21,35 +21,173 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DollarSign, PiggyBank, TrendingUp } from "lucide-react";
+import { SpendingBudgetPredicate } from "@/sway-api";
+import { bn, BN } from "fuels";
+import toast from "react-hot-toast";
+import { useActiveWallet } from "@/hooks/useActiveWallet";
 
 interface SpendingVault {
   id: number;
   name: string;
   limit: number;
   weeklyPercentage: number;
-  spent: number;
+  startTime: number;
+  endTime: number;
+  timePeriod: number;
+  predicate: SpendingBudgetPredicate;
   predicateAddress?: string;
   daysLeft?: number;
 }
 
 const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
-  const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
+  const { wallet } = useActiveWallet();
+  // const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("");
+  // const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [predicateBalance, setPredicateBalance] = useState<BN>(
+    bn.parseUnits("0")
+  );
+  const [vaultFunded, setVaultFunded] = useState(false);
+
+  const usdtAssetId =
+    "0x3f007b72f7bcb9b1e9abe2c76e63790cd574b7c34f1c91d6c2f407a5b55676b9";
 
   // Functions to handle deposit and withdraw
   const handleDeposit = () => {
-    console.log(`Depositing: ${depositAmount}`);
     // Add your deposit logic here
-    setIsDepositDialogOpen(false);
+    console.log(
+      `Depositing: ${bn.parseUnits((vault.limit / 10 ** 3).toString())}`
+    );
+    transferFundsToPredicate(bn.parseUnits((vault.limit / 10 ** 3).toString()));
   };
 
   const handleWithdraw = () => {
     console.log(`Withdrawing: ${withdrawAmount}`);
     // Add your withdraw logic here
-    setIsWithdrawDialogOpen(false);
+    unlockPredicateAndWithdrawFunds();
   };
+
+  // Function to get the balance of the predicate contract
+  async function getPredicateBalance() {
+    // Add your logic to get the balance here
+    const predicateBalance = await vault.predicate.getBalance(usdtAssetId);
+    console.log(
+      `Predicate Balance:  ${vault.predicateAddress} ${predicateBalance}`
+    );
+    if (predicateBalance.gt(bn.parseUnits("0"))) {
+      // console.log(predicateBalance.formatUnits(6));
+      setVaultFunded(true);
+      setPredicateBalance(predicateBalance);
+    } else {
+      setVaultFunded(false);
+      setPredicateBalance(predicateBalance);
+    }
+  }
+
+  const transferFundsToPredicate = async (amount: BN) => {
+    try {
+      if (!vault.predicate) {
+        return toast.error("Predicate not loaded");
+      }
+
+      if (!wallet) {
+        return toast.error("Wallet not loaded");
+      }
+
+      console.log(
+        "Transferring funds to predicate...",
+        vault.predicate.address,
+        amount,
+        usdtAssetId
+      );
+
+      const tx = await wallet.transfer(
+        vault.predicate.address,
+        amount,
+        usdtAssetId,
+        {
+          gasLimit: 10_000,
+        }
+      );
+
+      const { isStatusSuccess } = await tx.wait();
+
+      if (!isStatusSuccess) {
+        toast.error("Failed to fund vault");
+      }
+
+      if (isStatusSuccess) {
+        toast.success("Funds transferred to predicate.");
+        await getPredicateBalance();
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Error transferring funds to vault.");
+    }
+  };
+
+  const unlockPredicateAndWithdrawFunds = async () => {
+    try {
+      if (!wallet) {
+        return toast.error("Wallet not loaded");
+      }
+
+      // Initialize a new predicate instance with receiver and deadline
+      const configurable = {
+        RECEIVER: {
+          bits: wallet.address.toB256(),
+        },
+        AMOUNT: Number(vault.limit) * 10 ** 6,
+        START_TIME: vault.startTime,
+        TIME_PERIOD: vault.timePeriod,
+      };
+
+      const reInitializePredicate = new SpendingBudgetPredicate({
+        provider: wallet.provider,
+        configurableConstants: configurable,
+        data: [
+          configurable.RECEIVER,
+          Number(withdrawAmount) * 10 ** 6,
+          new Date().getTime() / 1000 + vault.timePeriod,
+        ],
+      });
+
+      if (!reInitializePredicate) {
+        return toast.error("Failed to initialize predicate");
+      }
+
+      console.log(reInitializePredicate.address.toB256());
+
+      /*
+        Try to 'unlock' the predicate and transfer the funds back to the receiver wallet.
+       */
+      const tx = await reInitializePredicate.transfer(
+        wallet.address,
+        bn.parseUnits((Number(withdrawAmount) / 10 ** 3).toString()),
+        usdtAssetId
+      );
+      const { isStatusSuccess } = await tx.wait();
+
+      if (!isStatusSuccess) {
+        toast.error("Failed to unlock predicate");
+      }
+
+      if (isStatusSuccess) {
+        toast.success(`$${withdrawAmount} withdrawn from vault.`);
+      }
+
+      await getPredicateBalance();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to unlock predicate.");
+    }
+  };
+
+  useEffect(() => {
+    getPredicateBalance();
+  }, []);
+
   return (
     <div>
       <Card
@@ -67,55 +205,83 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-500">
-                Limit Utilisation / Deposited Amount
-              </span>
-              <span className="text-lg font-semibold text-gray-700">
-                ${vault.spent} /{" "}
-                <span className="font-bold text-xl">${vault.limit}</span>
-              </span>
-            </div>
-            <Progress
-              value={(vault.spent / vault.limit) * 100}
-              className="h-2 bg-gray-200"
-            />
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">
-                Vault maturity in{" "}
-                <span className="text-lg">{vault.daysLeft}</span> days
-              </span>
-              <span className=" text-gray-700 font-bold ">
-                {Math.round((vault.spent / vault.limit) * 100)}%
-              </span>
-            </div>
-            {/* Insights of the Vault */}
-            <p className="items-center flex">
-              {" "}
-              <span className="font-semibold text-lg">Vault Insights</span>
-            </p>
-            <div className="flex flex-col items-left gap-4 text-gray-600">
-              <div className="flex items-center text-sm text-gray-600">
-                <TrendingUp className="mr-2 h-4 w-4 text-blue-500" />
-                <span>
-                  You have used {vault.weeklyPercentage}% of your {vault.name}{" "}
-                  Vault.
+          {vaultFunded ? (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-500">
+                  Limit Utilisation / Deposited Amount
+                </span>
+                <span className="text-lg font-semibold text-gray-700">
+                  ${vault.limit - Number(predicateBalance?.formatUnits(6))} /{" "}
+                  <span className="font-bold text-xl">${vault.limit}</span>
                 </span>
               </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <DollarSign className="mr-2 h-4 w-4 text-blue-500" />
-                <span>
-                  Amount gets linearly unlocked over the time period of the
-                  vault. Spend wisely!
+              <Progress
+                value={
+                  ((vault.limit - Number(predicateBalance?.formatUnits(6))) /
+                    vault.limit) *
+                  100
+                }
+                className="h-2 bg-gray-200"
+              />
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">
+                  Vault maturity in{" "}
+                  <span className="text-lg">{vault.daysLeft}</span> days
+                </span>
+                <span className=" text-gray-700 font-bold ">
+                  {Math.round(
+                    ((vault.limit - Number(predicateBalance?.formatUnits(6))) /
+                      vault.limit) *
+                      100
+                  )}
+                  %
                 </span>
               </div>
+              {/* Insights of the Vault */}
+              <p className="items-center flex">
+                {" "}
+                <span className="font-semibold text-lg">Vault Insights</span>
+              </p>
+              <div className="flex flex-col items-left gap-4 text-gray-600">
+                <div className="flex items-center text-sm text-gray-600">
+                  <TrendingUp className="mr-2 h-4 w-4 text-blue-500" />
+                  <span>
+                    You have used{" "}
+                    {((vault.limit - Number(predicateBalance?.formatUnits(6))) /
+                      vault.limit) *
+                      100}
+                    % of your {vault.name} Vault.
+                  </span>
+                </div>
+                <div className="flex items-center text-sm text-gray-600">
+                  <DollarSign className="mr-2 h-4 w-4 text-blue-500" />
+                  <span>
+                    Amount gets linearly unlocked over the time period of the
+                    vault. Spend wisely!
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center">
+              <span className="text-md  text-red-500 font-semibold">
+                Vault not funded. Please fund the vault with {vault.limit} USDT
+                to start spending.
+              </span>
+              <Button
+                onClick={handleDeposit}
+                variant="outline"
+                className=" mt-4"
+              >
+                Deposit
+              </Button>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="bg-gray-50 border-t flex items-center gap-8">
           {/* Deposit Button Dialog */}
-          <Dialog
+          {/* <Dialog
             open={isDepositDialogOpen}
             onOpenChange={setIsDepositDialogOpen}
           >
@@ -151,46 +317,48 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
 
           {/* Withdraw Button Dialog */}
-          <Dialog
-            open={isWithdrawDialogOpen}
-            onOpenChange={setIsWithdrawDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full mt-4">
-                Withdraw
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Withdraw from Vault</DialogTitle>
-                <DialogDescription>
-                  Enter the amount to withdraw from the vault.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <Label htmlFor="withdrawAmount">Amount</Label>
-                <Input
-                  id="withdrawAmount"
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  required
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleWithdraw}
-                  className="bg-green-500 hover:bg-green-600 text-white w-full"
-                >
+          {vaultFunded && (
+            <Dialog
+              open={isWithdrawDialogOpen}
+              onOpenChange={setIsWithdrawDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full mt-4">
                   Withdraw
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Withdraw from Vault</DialogTitle>
+                  <DialogDescription>
+                    Enter the amount to withdraw from the vault.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <Label htmlFor="withdrawAmount">Amount</Label>
+                  <Input
+                    id="withdrawAmount"
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    required
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleWithdraw}
+                    className="bg-green-500 hover:bg-green-600 text-white w-full"
+                  >
+                    Withdraw
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </CardFooter>
       </Card>
     </div>
