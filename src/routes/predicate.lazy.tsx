@@ -27,9 +27,13 @@ function Index() {
 
   const [pin, setPin] = useState<string>();
 
+  const usdtAssetId =
+    "0x3f007b72f7bcb9b1e9abe2c76e63790cd574b7c34f1c91d6c2f407a5b55676b9";
+
   useAsync(async () => {
     if (wallet) {
       baseAssetId = wallet.provider.getBaseAssetId();
+
       // // Initialize a new Time Lock predicate instance with receiver and deadline
       // const configurable = {
       //   RECEIVER: {
@@ -48,7 +52,7 @@ function Index() {
         RECEIVER: {
           bits: wallet.address.toB256(),
         },
-        AMOUNT: 0.001 * 10 ** 8,
+        AMOUNT: 1 * 10 ** 8,
         START_TIME: 1727456527,
         TIME_PERIOD: 600,
       };
@@ -59,13 +63,13 @@ function Index() {
         configurableConstants: configurable,
       });
       setPredicate(predicate);
-      setPredicateBalance(await predicate.getBalance());
+      setPredicateBalance(await predicate.getBalance(usdtAssetId));
     }
   }, [wallet]);
 
   const refreshBalances = async () => {
     await refreshWalletBalance?.();
-    setPredicateBalance(await predicate?.getBalance());
+    setPredicateBalance(await predicate?.getBalance(usdtAssetId));
   };
 
   const transferFundsToPredicate = async (amount: BN) => {
@@ -82,10 +86,11 @@ function Index() {
         "Transferring funds to predicate...",
         predicate.address,
         amount,
-        baseAssetId
+        usdtAssetId
+        // baseAssetId
       );
 
-      await wallet.transfer(predicate.address, amount, baseAssetId, {
+      await wallet.transfer(predicate.address, amount, usdtAssetId, {
         gasLimit: 10_000,
       });
 
@@ -171,7 +176,7 @@ function Index() {
         RECEIVER: {
           bits: wallet.address.toB256(),
         },
-        AMOUNT: 0.001 * 10 ** 8,
+        AMOUNT: 1 * 10 ** 8,
         START_TIME: 1727456527,
         TIME_PERIOD: 600,
       };
@@ -184,13 +189,15 @@ function Index() {
         data: [
           configurable.RECEIVER,
           amount * 10 ** 8,
-          configurable.START_TIME + 600,
+          configurable.START_TIME + 700,
         ],
       });
 
       if (!reInitializePredicate) {
         return toast.error("Failed to initialize predicate");
       }
+
+      console.log(reInitializePredicate.address.toB256());
 
       /*
         Try to 'unlock' the predicate and transfer the funds back to the wallet.
@@ -199,8 +206,8 @@ function Index() {
        */
       const tx = await reInitializePredicate.transfer(
         wallet.address,
-        bn.parseUnits(amount.toString()),
-        baseAssetId
+        bn.parseUnits("0.001"),
+        usdtAssetId
       );
       const { isStatusSuccess } = await tx.wait();
 
@@ -221,6 +228,32 @@ function Index() {
     }
   };
 
+  const saveToLocalStorage = () => {
+    const data = {
+      spendingBudgetVaults: [
+        {
+          vaultName: "Spending Budget Vault",
+          spendingAmount: 1000,
+          startTime: 1727456527,
+          endTime: 1727456527 + 600,
+          predicateAddress:
+            "0x3f007b72f7bcb9b1e9abe2c76e63790cd574b7c34f1c91d6c2f407a5b55676b9",
+          receiver:
+            "0x3f007b72f7bcb9b1e9abe2c76e63790cd574b7c34f1c91d6c2f407a5b55676b9",
+          createdAt: Date.now(),
+        },
+      ],
+      timeLockVaults: [],
+      conditinalReleaseVaults: [],
+    };
+    localStorage.setItem("chrono-vaults", JSON.stringify(data));
+  };
+
+  const loadFromLocalStorage = () => {
+    const data = localStorage.getItem("chrono-vaults");
+    console.log(JSON.parse(data as string));
+  };
+
   return (
     <>
       <div className="flex gap-4">
@@ -232,7 +265,7 @@ function Index() {
         <h5 className="font-semibold text-xl">Wallet Balance:</h5>
         <span className="text-gray-400">
           {walletBalance?.format({
-            precision: 6,
+            precision: 3,
           })}{" "}
           ETH
         </span>
@@ -241,12 +274,12 @@ function Index() {
       <div className="items-baseline flex gap-2">
         <h5 className="font-semibold text-xl">Predicate Balance:</h5>
         <span className="text-gray-400">
-          {predicateBalance?.format({
-            precision: 6,
-          })}{" "}
-          ETH
+          {predicateBalance?.formatUnits(6)} USDT
         </span>
       </div>
+
+      {/* <button onClick={saveToLocalStorage}>Save to localstorage</button>
+      <button onClick={loadFromLocalStorage}>Load from localstorage</button> */}
 
       {/* <Button
         onClick={async () =>
@@ -261,7 +294,7 @@ function Index() {
           await transferFundsToPredicate(bn.parseUnits("0.001"))
         }
       >
-        Transfer 0.001 ETH to Spending Budget Predicate
+        Transfer 1 USDT to Spending Budget Predicate
       </Button>
 
       <Input
@@ -281,10 +314,10 @@ function Index() {
 
       <Button
         onClick={async () =>
-          await unlockSpendingBudgetPredicateAndTransferFundsBack(0.0009)
+          await unlockSpendingBudgetPredicateAndTransferFundsBack(0.001)
         }
       >
-        Unlock Spending Budget Predicate and Transfer 0.00099 ETH back to Wallet
+        Unlock Spending Budget Predicate and Transfer 1 USDT back to Wallet
       </Button>
 
       <span className="mt-8 w-[400px] text-gray-400">

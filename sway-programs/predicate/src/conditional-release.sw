@@ -7,6 +7,7 @@ use std::constants::ZERO_B256;
 
 configurable {
     RECEIVER: Address = Address::from(ZERO_B256),
+    AMOUNT: u64 = 0, // total amount in ETH
     SECRET: u64 = 0,
 }
 
