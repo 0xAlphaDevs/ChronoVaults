@@ -1,7 +1,7 @@
 [project]
 authors = ["Fuel Labs <contact@fuel.sh>"]
-entry = "spending-budget.sw"
+entry = "conditional-release.sw"
 license = "Apache-2.0"
-name = "spending-budget-predicate"
+name = "conditional-release-predicate"
 
 [dependencies]

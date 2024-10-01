@@ -41,7 +41,7 @@ interface SpendingVault {
 
 const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
   const { wallet } = useActiveWallet();
-  // const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
   // const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -56,6 +56,7 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
   // Functions to handle deposit and withdraw
   const handleDeposit = () => {
     // Add your deposit logic here
+    setLoading(true);
     console.log(
       `Depositing: ${bn.parseUnits((vault.limit / 10 ** 3).toString())}`
     );
@@ -64,6 +65,7 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
 
   const handleWithdraw = () => {
     console.log(`Withdrawing: ${withdrawAmount}`);
+    setLoading(true);
     // Add your withdraw logic here
     unlockPredicateAndWithdrawFunds();
   };
@@ -118,13 +120,15 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
       }
 
       if (isStatusSuccess) {
-        toast.success("Funds transferred to predicate.");
+        toast.success("Funds transferred to vault.");
         await getPredicateBalance();
       }
     } catch (e) {
       console.error(e);
       toast.error("Error transferring funds to vault.");
     }
+
+    setLoading(false);
   };
 
   const unlockPredicateAndWithdrawFunds = async () => {
@@ -149,7 +153,8 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
         data: [
           configurable.RECEIVER,
           Number(withdrawAmount) * 10 ** 6,
-          new Date().getTime() / 1000 + vault.timePeriod,
+          // new Date().getTime() / 1000, // TO DO: uncomment this line for production
+          new Date().getTime() / 1000 + vault.timePeriod, // only for testing withdrawal before time period
         ],
       });
 
@@ -182,6 +187,8 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
       console.error(e);
       toast.error("Failed to unlock predicate.");
     }
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -251,7 +258,14 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
                     {((vault.limit - Number(predicateBalance?.formatUnits(6))) /
                       vault.limit) *
                       100}
-                    % of your {vault.name} Vault.
+                    % of your {vault.name} Vault. You can spend upto{" "}
+                    {Math.floor(Date.now() / 1000) > vault.endTime
+                      ? 100
+                      : (
+                          (vault.endTime - Math.floor(Date.now() / 1000)) /
+                          vault.timePeriod
+                        ).toFixed(2)}
+                    % of this vault at this time.
                   </span>
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
@@ -273,8 +287,9 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
                 onClick={handleDeposit}
                 variant="outline"
                 className=" mt-4"
+                disabled={loading}
               >
-                Deposit
+                {loading ? "Funding Vault..." : "Fund Vault"}
               </Button>
             </div>
           )}
@@ -337,6 +352,7 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
                     Enter the amount to withdraw from the vault.
                   </DialogDescription>
                 </DialogHeader>
+
                 <div className="space-y-4 py-4">
                   <Label htmlFor="withdrawAmount">Amount</Label>
                   <Input
@@ -352,8 +368,9 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
                   <Button
                     onClick={handleWithdraw}
                     className="bg-green-500 hover:bg-green-600 text-white w-full"
+                    disabled={loading}
                   >
-                    Withdraw
+                    {loading ? "Withdrawing..." : "Withdraw"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

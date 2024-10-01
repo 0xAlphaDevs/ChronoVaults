@@ -1,11 +1,11 @@
 [[package]]
-name = "core"
-source = "path+from-root-4BB20845430AF9CF"
-
-[[package]]
-name = "spending-budget-predicate"
+name = "conditional-release-predicate"
 source = "member"
 dependencies = ["std"]
+
+[[package]]
+name = "core"
+source = "path+from-root-4BB20845430AF9CF"
 
 [[package]]
 name = "std"

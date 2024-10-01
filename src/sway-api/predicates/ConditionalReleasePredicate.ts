@@ -25,6 +25,7 @@ export type AddressOutput = AddressInput;
 
 export type ConditionalReleasePredicateConfigurables = Partial<{
     RECEIVER: AddressInput;
+    AMOUNT: BigNumberish;
     SECRET: BigNumberish;
 }>;
 
@@ -93,17 +94,22 @@ const abi = {
     {
       "name": "RECEIVER",
       "concreteTypeId": "f597b637c3b0f588fb8d7086c6f4735caa3122b85f0423b82e489f9bb58e2308",
-      "offset": 1192
+      "offset": 1224
+    },
+    {
+      "name": "AMOUNT",
+      "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
+      "offset": 1216
     },
     {
       "name": "SECRET",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 1224
+      "offset": 1256
     }
   ]
 };
 
-const bytecode = decompressBytecode('H4sIAAAAAAAAA41UTWsTURS9SUcyRaEPEkFeQZ+QxegqoJUu3zAJ07QJedBNFsY0+AsMKi7nJ6jgx7K6kC4nEMHl+wn9CREUWjTQhUJDF/G8l0wynVbowMCde++575xzZ4afVOg5UZ7s5Rx0pjrHplN6Q+SpXyekfpBQI0ni9AG1z0Z5dTZy0P8UNYGai5rI1DT/rYDPtZ9JWumOyesEsder5UntxO0ndUYqjNuPa4yKuF9WqZg897coX6yVIuRyj8Cm5+e3gb+vgoFCj0Ld9WpOhDn7fYm4XiIVxAf9KmK/LHH2KjA3gLkHzBYwYoExfSb2SxHycSr/bZkfbC7zg0307fFjIv6TZfX3eHho+ApvXIpMT6b+hQeHRqdne8JhBE6rOEvj2ZtzOLLx7CyW5OHVXdSMxqN+A9haWfNjBg4XzvhszihLondEd9674Gl9p1c82CcevibeiojvjozvXqKDfxfZObfNHOvh2JHgqGwcDG0MLpX/eCDmGl2rceZl28ZGn4mriJuO5H+I3hpeE0kfwfMD+G6fWt6FFG93xhucd0YEv8juOBwS/8sM3uUTkeALc3xat17oBr7TBF6Z/WyQauF9MXHr6yK/rm4Sa25Q16+Yd0har4OhRu+e7W1eM/nIxr6dIZI8eEHvw4SXTvFKdKV5waeEF7S1sI/d2F3u4/y39YKomtkHS+2DXfKuXTf98GsF9Vu2t77wXPBJJctt7aLn8KtOuAXmCBvDD3e9UdKsXtZdH7kghl47E3tgycy1S2bKc3toSAfftDbfNLgWVFWa2diLo8FX2Ngv6U/hUMz9lCk/7fxw9nO60vUPoDtRddAEAAA=');
+const bytecode = decompressBytecode('H4sIAAAAAAAAA5VTTWsTURS9TVMyBaEPMkV5WThCFqOrQK10+YZJmKZJyEM3WTSm3bozqHQ5P0EFPzZCdeXOCURw+X5Cf8IICi0a6EKhpYt43stMMybpogMDd+6959zzzn3DTyv0jChH5smr7lgtsfGYXhFV5K9Tkj/IkrEg52yDOhdxTl7EefQ/Qc1CzUHNmql9Qc1NcO5MbZf/luBe6jwVtNwbkdv1I3e/liPZiDqP64xkEHV2a4yKeF9UqZh+97cpV6zZIXJLD6B038vtAH9P+gOJHom65dbyIXgO+wJx3SbpR5/7VcReWWD2KjA3gLkLzDYwziVG9+nYs0Pko0z+2zQ/2JrmB1vo2+MnRPwnm/XmAw+OtF7HHdmh7pmpP+T+kT6na3qCYQhNq5il8O0mGo5NPJnF0jy8uoOaPuNxvwlsraz4CYOGuRmf9IyyIHpDdPutBZ3Gd3K4f0g8eEm8ERJvxyQfRVZ6Dv59bs83NY/xcJQX0MhM7A9NvOBsJd2P8yyjfsv01vOC/yF6rWefV+g9tLyDpp0zo62Q0WZNtEFXI9YcZPYYDIn/ZRpv8XMnxRcS/No8PqZunfA64HBMDK+sUtNWrF5WPQ85PwKn0QROlnKuJZxZvw4W+OVe5ddzoo0Zv2TGL31PK1fcGZbcCasv9V5X9N3tmNhbn8RVxFMvDxZ4mdWtprrhRwseaK7RJsk2/g8dt79e5ktynVhrk3peRc8S5m75Q4XePdPbMnrCiR7D4aR57Ah676c7UpkdpbqyOxL/6WqKFfzTSv/T8KAgq8Iys0d5hXmOiT1bfQyGTsIvMvxmX9d9/gE2VQ338AQAAA==');
 
 export class ConditionalReleasePredicate extends Predicate<
   ConditionalReleasePredicateInputs,

@@ -16,11 +16,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
+import {
+  DollarSign,
+  CirclePlusIcon,
+  User,
+  Calendar,
+  LoaderCircle,
+} from "lucide-react";
 import TimeLockVaultCard from "@/components/TimeLockVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import toast from "react-hot-toast";
-import { Provider } from "fuels";
+import { Provider, bn } from "fuels";
 import { TimeLockPredicate } from "../sway-api/predicates/index";
 
 export const Route = createLazyFileRoute("/time-lock")({
@@ -32,8 +38,8 @@ interface TimeLockVault {
   name: string;
   amount: number;
   unlockDate: number;
+  predicate: TimeLockPredicate;
   predicateAddress?: string;
-  createdAt: Date;
 }
 
 interface TimeLockVaultLocalStorage {
@@ -41,32 +47,12 @@ interface TimeLockVaultLocalStorage {
   receiver: string;
   amount: string;
   unlockDate: number;
+  createdAt: number;
 }
-
-// Mock data for time-locked vaults
-// const mockTimeLockVaults: TimeLockVault[] = [
-//   {
-//     id: 1,
-//     name: "College Fund",
-//     saved: 1000,
-//     vaultGoal: 1000,
-//     lockPeriod: 30, // lock period in days
-//     createdAt: new Date("2024-01-01"),
-//   },
-//   {
-//     id: 2,
-//     name: "Retirement Fund",
-//     saved: 5000,
-//     vaultGoal: 10000,
-//     lockPeriod: 90, // lock period in days
-//     createdAt: new Date("2024-02-01"),
-//   },
-// ];
 
 const getTruncatedAddress = (address: string) => {
   return address.slice(0, 6) + "..." + address.slice(-4);
 };
-
 
 function Index() {
   const { wallet } = useActiveWallet();
@@ -78,6 +64,7 @@ function Index() {
     amount: "",
     unlockDate: "",
   });
+  const [loading, setLoading] = useState(false);
 
   // Function to handle vault form input changes
   const handleVaultFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,9 +77,7 @@ function Index() {
 
   // get spending vaults from local storage and refresh
   function refreshVaults() {
-    const vaults = JSON.parse(
-      localStorage.getItem("spending-budget-vaults") || "[]"
-    );
+    const vaults = JSON.parse(localStorage.getItem("time-lock-vaults") || "[]");
 
     console.log("Vaults: ", vaults);
     const timeVaults: TimeLockVault[] = [];
@@ -113,42 +98,43 @@ function Index() {
         configurableConstants: configurable,
       });
       console.log("Predicate: ", predicate.address, vault.vaultName);
-      // timeVaults.push({
-      //   id: index,
-      //   name: vault.vaultName,
-      //   amount: Number(vault.amount),
-      //   predicateAddress: predicate.address.toB256(),
-      //   unlockDate: vault.unlockDate,
-      // });
+      timeVaults.push({
+        id: index,
+        name: vault.vaultName,
+        amount: Number(vault.amount),
+        predicate: predicate,
+        predicateAddress: predicate.address.toB256(),
+        unlockDate: vault.unlockDate,
+      });
     });
     setTimeVaults(timeVaults);
   }
 
-
-  const handleCreateVault = () => {
+  const handleCreateVault = async () => {
+    setLoading(true);
     const unixTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp
-    const unlockTimestamp = vaultForm.unlockDate
+    const unlockDate: number = vaultForm.unlockDate
       ? Math.floor(new Date(vaultForm.unlockDate).getTime() / 1000)
-      : undefined;
+      : 0;
 
     const vaultData: TimeLockVaultLocalStorage = {
       vaultName: vaultForm.vaultName,
       receiver: vaultForm.receiver,
       amount: vaultForm.amount,
-      unlockDate: unlockTimestamp,
+      unlockDate: unlockDate,
       createdAt: unixTimestamp,
     };
 
-    console.log("Vault Created:", vaultData); // Log the vault data
+    console.log("Vault Data:", vaultData); // Log the vault data
     try {
       if (wallet) {
-        // const baseAssetId: string = wallet.provider.getBaseAssetId();
+        const baseAssetId: string = wallet.provider.getBaseAssetId();
         const configurable = {
           RECEIVER: {
             bits: wallet.address.toB256(),
           },
           AMOUNT: Number(vaultForm.amount) * 10 ** 6,
-          DEADLINE: unlockTimestamp,
+          DEADLINE: unlockDate,
         };
 
         // send test eth to the predicate
@@ -156,19 +142,30 @@ function Index() {
           provider: wallet?.provider as Provider,
           configurableConstants: configurable,
         });
-        console.log("Predicate: ", predicate.address, vaultData.vaultName);
+        console.log(
+          "Predicate: ",
+          predicate.address.toB256(),
+          vaultData.vaultName
+        );
 
-        // await wallet.transfer(
-        //   predicate.address,
-        //   bn.parseUnits("0.0001"),
-        //   baseAssetId,
-        //   {
-        //     gasLimit: 10_000,
-        //   }
-        // );
+        const tx = await wallet.transfer(
+          predicate.address,
+          bn.parseUnits("0.0001"),
+          baseAssetId,
+          {
+            gasLimit: 10_000,
+          }
+        );
 
-        // Show success UI and log the data
-        toast.success(`${vaultForm.vaultName} Vault Created`);
+        const { isStatusSuccess } = await tx.wait();
+
+        if (!isStatusSuccess) {
+          toast.error("Failed to create vault");
+        }
+
+        if (isStatusSuccess) {
+          toast.success(`${vaultData.vaultName} vault created`);
+        }
 
         // save to localstorage
         const vaults = JSON.parse(
@@ -193,6 +190,7 @@ function Index() {
       receiver: wallet ? wallet.address.toB256() : "",
     });
 
+    setLoading(false);
     // Close the dialog
     setIsDialogOpen(false);
   };
@@ -205,7 +203,6 @@ function Index() {
       receiver: wallet ? wallet.address.toB256() : "",
     }));
   }, [wallet]);
-
 
   useEffect(() => {
     // Fetch spending vaults from local storage
@@ -235,78 +232,85 @@ function Index() {
                   <DialogTitle>Create Time Lock Vault</DialogTitle>
                   <DialogDescription>
                     Set up a new time lock vault with name, receiver, amount,
-                    and lock date.
+                    and unlock date.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vaultName">Vault Name</Label>
-                    <Input
-                      id="vaultName"
-                      value={vaultForm.vaultName}
-                      onChange={handleVaultFormChange}
-                      placeholder="e.g., Vacation Fund"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                {!loading ? (
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="vaultName">Vault Name</Label>
                       <Input
-                        id="amount"
-                        value={vaultForm.amount}
+                        id="vaultName"
+                        value={vaultForm.vaultName}
                         onChange={handleVaultFormChange}
-                        placeholder="Enter amount"
-                        type="number"
-                        className="pl-10"
+                        placeholder="e.g. College Fund"
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="unlockDate">Unlock Date</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">Amount</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="amount"
+                          value={vaultForm.amount}
+                          onChange={handleVaultFormChange}
+                          placeholder="Enter amount"
+                          type="number"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                      <Input
-                        className=" pl-10 block w-full text-muted-foreground"
-                        id="unlockDate"
-                        type="date" // Change to type="date"
-                        value={vaultForm.unlockDate || ""} // Set to empty string if undefined
-                        onChange={handleVaultFormChange}
-                        min={today}
-                        required
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="unlockDate">Unlock Date</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
+                        <Input
+                          className=" pl-10 block w-full text-muted-foreground"
+                          id="unlockDate"
+                          type="date" // Change to type="date"
+                          value={vaultForm.unlockDate || ""} // Set to empty string if undefined
+                          onChange={handleVaultFormChange}
+                          min={today}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="receiver">Receiver Address</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="receiver"
+                          value={getTruncatedAddress(vaultForm.receiver)}
+                          onChange={handleVaultFormChange}
+                          placeholder="Enter receiver address"
+                          className="pl-10"
+                          disabled
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="receiver">Receiver Address</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input
-                        id="receiver"
-                        value={getTruncatedAddress(vaultForm.receiver)}
-                        onChange={handleVaultFormChange}
-                        placeholder="Enter receiver address"
-                        className="pl-10"
-                        disabled
-                        required
-                      />
-                    </div>
+                ) : (
+                  <div className="flex items-center flex-col text-3xl text-gray-500 p-10 gap-2">
+                    <LoaderCircle className="animate-spin h-16 w-16" />
+                    <p>Creating Vault...</p>
                   </div>
-
-                </div>
+                )}
                 <DialogFooter>
                   <Button
                     onClick={handleCreateVault}
                     type="submit"
                     className="bg-green-500 hover:bg-green-600 text-white w-full"
+                    disabled={loading}
                   >
-                    Create Vault
+                    {loading ? "Creating..." : "Create Vault"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -318,9 +322,7 @@ function Index() {
                 No time lock vaults created yet.
               </div>
             )}
-            {timeVaults?.map((vault) => (
-              <TimeLockVaultCard vault={vault} />
-            ))}
+            {timeVaults?.map((vault) => <TimeLockVaultCard vault={vault} />)}
           </div>
         </div>
       </div>

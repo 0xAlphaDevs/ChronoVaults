@@ -15,7 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
+import {
+  DollarSign,
+  CirclePlusIcon,
+  User,
+  Calendar,
+  LoaderCircle,
+} from "lucide-react";
 import SpendingVaultCard from "@/components/SpendingVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import { SpendingBudgetPredicate } from "../sway-api/predicates/index";
@@ -41,7 +47,7 @@ interface SpendingVault {
 }
 
 // type for local storage vault data
-interface SpendingBudgetVault {
+interface SpendingBudgetVaultLocalStorage {
   vaultName: string;
   spendingLimit: string;
   receiver: string;
@@ -65,6 +71,7 @@ function Index() {
     timePeriod: "",
     receiver: "", // Initializing receiver with wallet address,
   });
+  const [loading, setLoading] = useState(false);
 
   // Function to handle vault creation form input change
   const handleVaultFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +91,7 @@ function Index() {
     // console.log("Vaults: ", vaults);
     const spendingVaults: SpendingVault[] = [];
 
-    vaults.forEach((vault: SpendingBudgetVault, index: number) => {
+    vaults.forEach((vault: SpendingBudgetVaultLocalStorage, index: number) => {
       // calculate predicate address and get balance
       const configurable = {
         RECEIVER: {
@@ -122,18 +129,19 @@ function Index() {
 
   // Function to handle vault creation
   const handleCreateVault = async () => {
+    setLoading(true);
     const currentUnixTimestamp = Math.floor(Date.now() / 1000);
-    const timePeriodUnix: number = vaultForm.timePeriod
+    const endTimeUnix: number = vaultForm.timePeriod
       ? Math.floor(new Date(vaultForm.timePeriod).getTime() / 1000)
       : 0;
 
-    const vaultData: SpendingBudgetVault = {
+    const vaultData: SpendingBudgetVaultLocalStorage = {
       vaultName: vaultForm.vaultName,
       spendingLimit: vaultForm.spendingLimit,
       receiver: vaultForm.receiver,
       startTime: currentUnixTimestamp,
-      endTime: timePeriodUnix,
-      timePeriod: timePeriodUnix - currentUnixTimestamp,
+      endTime: endTimeUnix,
+      timePeriod: endTimeUnix - currentUnixTimestamp,
       createdAt: currentUnixTimestamp,
     };
 
@@ -147,7 +155,7 @@ function Index() {
           },
           AMOUNT: Number(vaultForm.spendingLimit) * 10 ** 6,
           START_TIME: currentUnixTimestamp,
-          TIME_PERIOD: timePeriodUnix - currentUnixTimestamp,
+          TIME_PERIOD: endTimeUnix - currentUnixTimestamp,
         };
 
         // send test eth to the predicate
@@ -198,6 +206,7 @@ function Index() {
       timePeriod: "",
       receiver: wallet ? wallet.address.toB256() : "",
     });
+    setLoading(false);
 
     setIsDialogOpen(false);
   };
@@ -237,75 +246,84 @@ function Index() {
                 <DialogHeader>
                   <DialogTitle>Create Spending Budget Vault</DialogTitle>
                   <DialogDescription>
-                    Set up a new spending budget with monthly limit and weekly
-                    percentage.
+                    Set up a new spending budget vault with a spending limit and
+                    time period.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vaultName">Vault Name</Label>
-                    <Input
-                      id="vaultName"
-                      value={vaultForm.vaultName}
-                      onChange={handleVaultFormChange}
-                      placeholder="e.g., Monthly Budget"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="spendingLimit">Spending Limit</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                {!loading ? (
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="vaultName">Vault Name</Label>
                       <Input
-                        id="spendingLimit"
-                        value={vaultForm.spendingLimit}
+                        id="vaultName"
+                        value={vaultForm.vaultName}
                         onChange={handleVaultFormChange}
-                        placeholder="Enter amount"
-                        type="number"
-                        className="pl-10"
+                        placeholder="e.g., Monthly Budget"
                         required
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timePeriod">Time Period</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <div className="space-y-2">
+                      <Label htmlFor="spendingLimit">Spending Limit</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="spendingLimit"
+                          value={vaultForm.spendingLimit}
+                          onChange={handleVaultFormChange}
+                          placeholder="Enter amount"
+                          type="number"
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timePeriod">Time Period</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
 
-                      <Input
-                        className=" pl-10 block w-full text-muted-foreground"
-                        id="timePeriod"
-                        type="date" // Change to type="date"
-                        value={vaultForm.timePeriod || ""} // Set to empty string if undefined
-                        onChange={handleVaultFormChange}
-                        min={today}
-                        required
-                      />
+                        <Input
+                          className=" pl-10 block w-full text-muted-foreground"
+                          id="timePeriod"
+                          type="date" // Change to type="date"
+                          value={vaultForm.timePeriod || ""} // Set to empty string if undefined
+                          onChange={handleVaultFormChange}
+                          min={today}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="receiver">Receiver Address</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <Input
+                          id="receiver"
+                          value={getTruncatedAddress(vaultForm.receiver)}
+                          onChange={handleVaultFormChange}
+                          placeholder="Enter receiver address"
+                          className="pl-10"
+                          disabled
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="receiver">Receiver Address</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input
-                        id="receiver"
-                        value={getTruncatedAddress(vaultForm.receiver)}
-                        onChange={handleVaultFormChange}
-                        placeholder="Enter receiver address"
-                        className="pl-10"
-                        disabled
-                        required
-                      />
-                    </div>
+                ) : (
+                  <div className="flex items-center flex-col text-3xl text-gray-500 p-10 gap-2">
+                    <LoaderCircle className="animate-spin h-16 w-16" />
+                    <p>Creating Vault...</p>
                   </div>
-                </div>
+                )}
+
                 <DialogFooter>
                   <Button
                     onClick={handleCreateVault}
                     type="submit"
                     className="bg-green-500 hover:bg-green-600 text-white w-full"
+                    disabled={loading}
                   >
-                    Create Vault
+                    {loading ? "Creating..." : "Create Vault"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

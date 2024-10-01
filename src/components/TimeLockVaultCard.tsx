@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -21,34 +21,168 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DollarSign, Timer, TrendingUp } from "lucide-react";
+import { bn, BN } from "fuels";
+import toast from "react-hot-toast";
+import { useActiveWallet } from "@/hooks/useActiveWallet";
+import { TimeLockPredicate } from "@/sway-api";
 
 interface TimeLockVault {
   id: number;
   name: string;
-  saved: number;
-  vaultGoal: number;
-  lockPeriod: number;
-  createdAt: Date;
+  amount: number;
+  unlockDate: number;
+  predicate: TimeLockPredicate;
+  predicateAddress?: string;
 }
 
 const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
+  const { wallet } = useActiveWallet();
+  const [loading, setLoading] = useState(false);
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
-  const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [predicateBalance, setPredicateBalance] = useState<BN>(
+    bn.parseUnits("0")
+  );
+
+  const usdtAssetId =
+    "0x3f007b72f7bcb9b1e9abe2c76e63790cd574b7c34f1c91d6c2f407a5b55676b9";
 
   // Functions to handle deposit and withdraw
   const handleDeposit = () => {
-    console.log(`Depositing: ${depositAmount}`);
     // Add your deposit logic here
-    setIsDepositDialogOpen(false);
+    setLoading(true);
+    console.log(
+      `Depositing: ${bn.parseUnits((Number(depositAmount) / 10 ** 3).toString())}`
+    );
+    transferFundsToPredicate(
+      bn.parseUnits((Number(depositAmount) / 10 ** 3).toString())
+    );
   };
 
   const handleWithdraw = () => {
-    console.log(`Withdrawing: ${withdrawAmount}`);
+    setLoading(true);
     // Add your withdraw logic here
-    setIsWithdrawDialogOpen(false);
+    unlockPredicateAndWithdrawFunds();
   };
+
+  // Function to get the balance of the predicate contract
+  async function getPredicateBalance() {
+    // Add your logic to get the balance here
+    const predicateBalance = await vault.predicate.getBalance(usdtAssetId);
+    console.log(
+      `Predicate Balance:  ${vault.predicateAddress} ${predicateBalance}`
+    );
+    setPredicateBalance(predicateBalance);
+  }
+
+  const transferFundsToPredicate = async (amount: BN) => {
+    try {
+      if (!vault.predicate) {
+        return toast.error("Predicate not loaded");
+      }
+
+      if (!wallet) {
+        return toast.error("Wallet not loaded");
+      }
+
+      console.log(
+        "Transferring funds to predicate...",
+        vault.predicate.address,
+        amount,
+        usdtAssetId
+      );
+
+      const tx = await wallet.transfer(
+        vault.predicate.address,
+        amount,
+        usdtAssetId,
+        {
+          gasLimit: 10_000,
+        }
+      );
+
+      const { isStatusSuccess } = await tx.wait();
+
+      if (!isStatusSuccess) {
+        toast.error("Failed to fund vault");
+      }
+
+      if (isStatusSuccess) {
+        toast.success("Funds transferred to vault.");
+        await getPredicateBalance();
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Error transferring funds to vault.");
+    }
+
+    setLoading(false);
+  };
+
+  const unlockPredicateAndWithdrawFunds = async () => {
+    try {
+      if (!wallet) {
+        return toast.error("Wallet not loaded");
+      }
+
+      // Initialize a new predicate instance with receiver and deadline
+      const configurable = {
+        RECEIVER: {
+          bits: wallet.address.toB256(),
+        },
+        AMOUNT: Number(vault.amount) * 10 ** 6,
+        DEADLINE: vault.unlockDate,
+      };
+
+      const reInitializePredicate = new TimeLockPredicate({
+        provider: wallet.provider,
+        configurableConstants: configurable,
+        data: [
+          configurable.RECEIVER,
+          vault.unlockDate + 1, // only for testing withdrawal before time period
+          // new Date().getTime() / 1000, // TO DO: uncomment this line for production
+        ],
+      });
+
+      if (!reInitializePredicate) {
+        return toast.error("Failed to initialize predicate");
+      }
+
+      // console.log(reInitializePredicate.address.toB256());
+
+      /*
+        Try to 'unlock' the predicate and transfer the funds back to the receiver wallet.
+       */
+      const tx = await reInitializePredicate.transfer(
+        wallet.address,
+        predicateBalance,
+        usdtAssetId
+      );
+      const { isStatusSuccess } = await tx.wait();
+
+      if (!isStatusSuccess) {
+        toast.error("Failed to unlock predicate");
+      }
+
+      if (isStatusSuccess) {
+        toast.success(
+          `$${Math.round(Number(predicateBalance.formatUnits(6)))} withdrawn from vault.`
+        );
+      }
+
+      await getPredicateBalance();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to unlock predicate.");
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    getPredicateBalance();
+  }, []);
+
   return (
     <div>
       <Card
@@ -61,8 +195,7 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
             {vault.name}
           </CardTitle>
           <CardDescription className="text-black text-lg font-semibold text-right">
-            Goal :{" "}
-            <span className="font-bold text-2xl">${vault.vaultGoal}</span>
+            Goal : <span className="font-bold text-2xl">${vault.amount}</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
@@ -72,21 +205,29 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
                 Your Progress
               </span>
               <span className="text-lg font-semibold text-gray-700">
-                ${vault.saved} /{" "}
-                <span className="font-bold text-xl">${vault.vaultGoal}</span>
+                ${Number(predicateBalance?.formatUnits(6))} /{" "}
+                <span className="font-bold text-xl">${vault.amount}</span>
               </span>
             </div>
             <Progress
-              value={(vault.saved / vault.vaultGoal) * 100}
+              value={
+                (Number(predicateBalance?.formatUnits(6)) / vault.amount) * 100
+              }
               className="h-2 bg-gray-200"
             />
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">
-                Time Left :{" "}
-                <span className="text-lg text-red-400">29 days</span>
+                Unlock Date :{" "}
+                <span className="text-lg font-bold text-red-400">
+                  {new Date(vault.unlockDate * 1000).toDateString()}
+                </span>
               </span>
               <span className=" text-gray-700 font-bold ">
-                {Math.round((vault.saved / vault.vaultGoal) * 100)}%
+                {Math.round(
+                  (Number(predicateBalance?.formatUnits(6)) / vault.amount) *
+                    100
+                )}
+                %
               </span>
             </div>
             {/* Insights of the Vault */}
@@ -99,14 +240,17 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
                 <TrendingUp className="mr-2 h-4 w-4 text-blue-500" />
                 <span>
                   You have saved{" "}
-                  {Math.round((vault.saved / vault.vaultGoal) * 100)}% for your{" "}
-                  {vault.name} goal.
+                  {Math.round(
+                    (Number(predicateBalance?.formatUnits(6)) / vault.amount) *
+                      100
+                  )}
+                  % for your {vault.name} goal.
                 </span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <DollarSign className="mr-2 h-4 w-4 text-blue-500" />
                 <span>
-                  Amount gets unlocked after the lock period of the vault. Keep
+                  Amount gets unlocked after the unlock date of the vault. Keep
                   saving!
                 </span>
               </div>
@@ -146,6 +290,7 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
                 <Button
                   onClick={handleDeposit}
                   className="bg-green-500 hover:bg-green-600 text-white w-full"
+                  disabled={loading}
                 >
                   Deposit
                 </Button>
@@ -154,7 +299,7 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
           </Dialog>
 
           {/* Withdraw Button Dialog */}
-          <Dialog
+          {/* <Dialog
             open={isWithdrawDialogOpen}
             onOpenChange={setIsWithdrawDialogOpen}
           >
@@ -190,7 +335,16 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
+
+          <Button
+            variant="outline"
+            className="w-full mt-4"
+            onClick={handleWithdraw}
+            disabled={loading || predicateBalance.isZero()}
+          >
+            Withdraw Funds
+          </Button>
         </CardFooter>
       </Card>
     </div>

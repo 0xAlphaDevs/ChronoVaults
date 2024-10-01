@@ -25,6 +25,7 @@ export type AddressOutput = AddressInput;
 
 export type TimeLockPredicateConfigurables = Partial<{
     RECEIVER: AddressInput;
+    AMOUNT: BigNumberish;
     DEADLINE: BigNumberish;
 }>;
 
@@ -93,17 +94,22 @@ const abi = {
     {
       "name": "RECEIVER",
       "concreteTypeId": "f597b637c3b0f588fb8d7086c6f4735caa3122b85f0423b82e489f9bb58e2308",
-      "offset": 1200
+      "offset": 1232
+    },
+    {
+      "name": "AMOUNT",
+      "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
+      "offset": 1216
     },
     {
       "name": "DEADLINE",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 1192
+      "offset": 1224
     }
   ]
 };
 
-const bytecode = decompressBytecode('H4sIAAAAAAAAA41UTWsTURS9SUcyBaEPMkF5WThCFqOrQK10+YbJME2TkIdusjCmxV9gUOlyfoIKfmyE6irLCURwOT+hP2EEhRYNdKHQ0kU87yXTjEkKDQzcufeec8879034aZVeEOVJ/4xBdxLn2GRCb4gc+euU5A8yZSLIPtukzkWSlxeJgf5nqJmo2aiZC7UB/y2Bz3WeC1rrjcnpepGz7+dJNqLO0zojGUSdJz6jIp5XNSqm7/0dyhd9K0Qu9xBq9t38LvD3pTeU6JGom45vhOA57AvEdYukFw36NcRuRWD2OjA3gbkHzA4w9iVG9anYtULko0z+2zw/3J7nh9vo2+MnRPwnWzz/Jx4cKb22M7ZC1bNQf8S9I3VOR/cEoxCa1jErxrsz03Cs4+kslubh1V3U1BmP+01g/UrMTxg0LM34omZUBNE7ojvvTejUvpPNvUPiwWvijZB4OyH5ODLTc/DvS7u8pXi0h2NDQCPTsTfS8YqzlVU/zrOG+m3dWzcE/0P0Vs0+r9JHaPkATbtnWlsho82caoOuRqI4SO8xGBH/yxTe5Od2ii/M8BvL+IS6dcJjg8PWMbwyy00rZvVK3HOR8yJwak3gZCnnxowz69fBCr+cq/x6SbS54JfM+KXuafWKO8Nmd8LsS7XXG+rudnTslqZxDfHcy4MVXmZ1x3Pd8KMFDxTXeItkG9+HittfL/NlWSLW2qKeW1WzhL5b3ihG757ubWk94VSP5rDTPHYEvQ/SHcWZHaW6sjsS/+lqCir5Vqy+aXhQkDVh6tljI8Y8W8euFX8ORvaMX2T49b6C6Z/TtX7/ANeaDjXQBAAA');
+const bytecode = decompressBytecode('H4sIAAAAAAAAA5VTTWsTURS9SUc6BaEPMkF5WThCFqOrQK10OcNkmKZJyEM3WRjT4s6dQaXL+Qkq+LERqqsuJxDB5fsJ/QkjKLRooAuFli7ieS8zzZikCwcGztyPc8879w0/rdFzoiLpx5C9iSywyYReE9XEz1MS38kUiUv22QZ1L5KiuEgM1D9Fzkxz5lzuCXIMORs5Npc75L8EuAvdZy6t9Mfk9PzY2QuKJJpx93GDkQjj7qOAUQnvyzqVsu/BNhVLgRUhVrgPpXtecQf9d4U/FKgRyJtOYETgORi4wA2LhB8fDurAXtXF7DX0XEfPHfRso8e+7FF1CntWhHici3+dxYdbs/hwC3W7/ISI/2Dz3nzk4ZHSaztjK1I1c/kH3D9S53R0TTiKoGkNsyS+nVTDscbTWSyLw6vbyKkzHg9a6A2qkp8waFiY8VnNqLpEb4luvTOhU/tONvcPiIeviDcj4p2ExMPYzM7Bvy3s+Ybi0R6ODRcamcb+SOMlZ6uoepxnBfmburZhuPw30Rs1+7xGH6DlPTTtnGltqzlt5lQbdDUTxUF6j+GI+B+m+k1+bmf9q2n/+mJ/Qr0G4bXBYWsMr8xKy5KsUZV9DzE/BqfWBE6Wca6nnHm/9pf45Vzl1wuijTm/RM4vdU9rV9wZlt4JcyDUXq+pu9vV2CtPcR145uX+Ei/zuuVMN/xowwPFNd4k0cH/oXDny2W8IsrE2pvU92pqlqvvlj+SqN3VtW2tJ5rq0Rx2FseOoPdetiOZ21GmK78j9x9dLbdQDiyp/ml4sCrqLtOzx4bEPFtjz5KfwpGd8rs5fr2v/33+AvCj+GfwBAAA');
 
 export class TimeLockPredicate extends Predicate<
   TimeLockPredicateInputs,
