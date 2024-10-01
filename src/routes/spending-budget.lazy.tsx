@@ -18,38 +18,35 @@ import {
 import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
 import SpendingVaultCard from "@/components/SpendingVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
+import { SpendingBudgetPredicate } from "../sway-api/predicates/index";
 import toast from "react-hot-toast";
+import { Provider } from "fuels";
 
 export const Route = createLazyFileRoute("/spending-budget")({
   component: Index,
 });
 
+// To Change
 interface SpendingVault {
   id: number;
   name: string;
   limit: number;
   weeklyPercentage: number;
   spent: number;
+  predicateAddress?: string;
+  daysLeft?: number;
 }
 
-// Mock data for existing vaults
-const mockSpendingVaults: SpendingVault[] = [
-  {
-    id: 1,
-    name: "Monthly Budget",
-    limit: 1000,
-    weeklyPercentage: 25,
-    spent: 750,
-  },
-  { id: 2, name: "Groceries", limit: 400, weeklyPercentage: 25, spent: 150 },
-  {
-    id: 3,
-    name: "Entertainment",
-    limit: 200,
-    weeklyPercentage: 50,
-    spent: 180,
-  },
-];
+// type for local storage vault data
+interface SpendingBudgetVault {
+  vaultName: string;
+  spendingLimit: string;
+  receiver: string;
+  startTime: number;
+  endTime: number;
+  timePeriod: number;
+  createdAt: number;
+}
 
 const getTruncatedAddress = (address: string) => {
   return address.slice(0, 6) + "..." + address.slice(-4);
@@ -57,6 +54,7 @@ const getTruncatedAddress = (address: string) => {
 
 function Index() {
   const { wallet } = useActiveWallet();
+  const [spendingVaults, setSpendingVaults] = useState<SpendingVault[]>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState({
     vaultName: "",
@@ -74,26 +72,110 @@ function Index() {
     }));
   };
 
-  // Function to handle vault creation
-  const handleCreateVault = () => {
-    const currentUnixTimestamp = Math.floor(Date.now() / 1000);
-    const timePeriodUnix = vaultForm.timePeriod
-      ? Math.floor(new Date(vaultForm.timePeriod).getTime() / 1000)
-      : null;
+  // get spending vaults from local storage and refresh
+  function refreshVaults() {
+    const vaults = JSON.parse(
+      localStorage.getItem("spending-budget-vaults") || "[]"
+    );
 
-    const vaultData = {
+    console.log("Vaults: ", vaults);
+    const spendingVaults: SpendingVault[] = [];
+
+    vaults.forEach((vault: SpendingBudgetVault, index: number) => {
+      // calculate predicate address and get balance
+      const configurable = {
+        RECEIVER: {
+          bits: vault.receiver,
+        },
+        AMOUNT: Number(vault.spendingLimit) * 10 ** 6,
+        START_TIME: vault.startTime,
+        TIME_PERIOD: vault.timePeriod,
+      };
+
+      // send test eth to the predicate
+      const predicate = new SpendingBudgetPredicate({
+        provider: wallet?.provider as Provider,
+        configurableConstants: configurable,
+      });
+      console.log("Predicate: ", predicate.address, vault.vaultName);
+      spendingVaults.push({
+        id: index,
+        name: vault.vaultName,
+        limit: Number(vault.spendingLimit),
+        weeklyPercentage: 0,
+        predicateAddress: predicate.address.toB256(),
+        daysLeft: Math.floor(
+          (vault.endTime - Math.floor(Date.now() / 1000)) / 86400
+        ),
+        spent: 80,
+      });
+    });
+    setSpendingVaults(spendingVaults);
+  }
+
+  // Function to handle vault creation
+  const handleCreateVault = async () => {
+    const currentUnixTimestamp = Math.floor(Date.now() / 1000);
+    const timePeriodUnix: number = vaultForm.timePeriod
+      ? Math.floor(new Date(vaultForm.timePeriod).getTime() / 1000)
+      : 0;
+
+    const vaultData: SpendingBudgetVault = {
       vaultName: vaultForm.vaultName,
       spendingLimit: vaultForm.spendingLimit,
       receiver: vaultForm.receiver,
-      timePeriod: timePeriodUnix,
+      startTime: currentUnixTimestamp,
+      endTime: timePeriodUnix,
+      timePeriod: timePeriodUnix - currentUnixTimestamp,
       createdAt: currentUnixTimestamp,
     };
 
-    // Show success UI and log the data
-    toast.success("Vault Created Successfully!");
-
-    // Print the values to the console
     console.log("Vault Data: ", vaultData);
+    try {
+      if (wallet) {
+        // const baseAssetId: string = wallet.provider.getBaseAssetId();
+        const configurable = {
+          RECEIVER: {
+            bits: wallet.address.toB256(),
+          },
+          AMOUNT: Number(vaultForm.spendingLimit) * 10 ** 6,
+          START_TIME: currentUnixTimestamp,
+          TIME_PERIOD: timePeriodUnix - currentUnixTimestamp,
+        };
+
+        // send test eth to the predicate
+        const predicate = new SpendingBudgetPredicate({
+          provider: wallet?.provider as Provider,
+          configurableConstants: configurable,
+        });
+        console.log("Predicate: ", predicate.address, vaultData.vaultName);
+
+        // await wallet.transfer(
+        //   predicate.address,
+        //   bn.parseUnits("0.0001"),
+        //   baseAssetId,
+        //   {
+        //     gasLimit: 10_000,
+        //   }
+        // );
+
+        // Show success UI and log the data
+        toast.success(`${vaultForm.vaultName} Vault Created`);
+
+        // save to localstorage
+        const vaults = JSON.parse(
+          localStorage.getItem("spending-budget-vaults") || "[]"
+        );
+        vaults.push(vaultData);
+        localStorage.setItem("spending-budget-vaults", JSON.stringify(vaults));
+        refreshVaults();
+      } else {
+        toast.error("Please connect your wallet to create a vault");
+      }
+    } catch (error) {
+      console.error("Error creating vault: ", error);
+      toast.error("Error creating vault");
+    }
 
     // Reset form and close dialog
     setVaultForm({
@@ -102,6 +184,7 @@ function Index() {
       timePeriod: "",
       receiver: wallet ? wallet.address.toB256() : "",
     });
+
     setIsDialogOpen(false);
   };
 
@@ -112,6 +195,13 @@ function Index() {
       ...prev,
       receiver: wallet ? wallet.address.toB256() : "",
     }));
+  }, [wallet]);
+
+  useEffect(() => {
+    // Fetch spending vaults from local storage
+    if (wallet) {
+      refreshVaults();
+    }
   }, [wallet]);
 
   return (
@@ -208,7 +298,12 @@ function Index() {
             </Dialog>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-            {mockSpendingVaults.map((vault) => (
+            {spendingVaults?.length === 0 && (
+              <div className="text-center text-3xl text-gray-500 mt-20">
+                No spending vaults created yet.
+              </div>
+            )}
+            {spendingVaults?.map((vault) => (
               <SpendingVaultCard vault={vault} />
             ))}
           </div>

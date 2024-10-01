@@ -28,6 +28,8 @@ interface SpendingVault {
   limit: number;
   weeklyPercentage: number;
   spent: number;
+  predicateAddress?: string;
+  daysLeft?: number;
 }
 
 const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
@@ -68,7 +70,7 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-500">
-                Limit Utilisation
+                Limit Utilisation / Deposited Amount
               </span>
               <span className="text-lg font-semibold text-gray-700">
                 ${vault.spent} /{" "}
@@ -81,7 +83,8 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
             />
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">
-                Vault maturity in <span className="text-lg">29</span> days
+                Vault maturity in{" "}
+                <span className="text-lg">{vault.daysLeft}</span> days
               </span>
               <span className=" text-gray-700 font-bold ">
                 {Math.round((vault.spent / vault.limit) * 100)}%
