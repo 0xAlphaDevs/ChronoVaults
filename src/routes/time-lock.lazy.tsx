@@ -20,40 +20,48 @@ import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
 import TimeLockVaultCard from "@/components/TimeLockVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import toast from "react-hot-toast";
+import { Provider } from "fuels";
+import { TimeLockPredicate } from "../sway-api/predicates/index";
 
 export const Route = createLazyFileRoute("/time-lock")({
   component: Index,
 });
 
-
 interface TimeLockVault {
   id: number;
   name: string;
-  saved: number;
-  vaultGoal: number;
-  lockPeriod: number;
+  amount: number;
+  unlockDate: number;
+  predicateAddress?: string;
   createdAt: Date;
 }
 
+interface TimeLockVaultLocalStorage {
+  vaultName: string;
+  receiver: string;
+  amount: string;
+  unlockDate: number;
+}
+
 // Mock data for time-locked vaults
-const mockTimeLockVaults: TimeLockVault[] = [
-  {
-    id: 1,
-    name: "College Fund",
-    saved: 1000,
-    vaultGoal: 1000,
-    lockPeriod: 30, // lock period in days
-    createdAt: new Date("2024-01-01"),
-  },
-  {
-    id: 2,
-    name: "Retirement Fund",
-    saved: 5000,
-    vaultGoal: 10000,
-    lockPeriod: 90, // lock period in days
-    createdAt: new Date("2024-02-01"),
-  },
-];
+// const mockTimeLockVaults: TimeLockVault[] = [
+//   {
+//     id: 1,
+//     name: "College Fund",
+//     saved: 1000,
+//     vaultGoal: 1000,
+//     lockPeriod: 30, // lock period in days
+//     createdAt: new Date("2024-01-01"),
+//   },
+//   {
+//     id: 2,
+//     name: "Retirement Fund",
+//     saved: 5000,
+//     vaultGoal: 10000,
+//     lockPeriod: 90, // lock period in days
+//     createdAt: new Date("2024-02-01"),
+//   },
+// ];
 
 const getTruncatedAddress = (address: string) => {
   return address.slice(0, 6) + "..." + address.slice(-4);
@@ -62,12 +70,13 @@ const getTruncatedAddress = (address: string) => {
 
 function Index() {
   const { wallet } = useActiveWallet();
+  const [timeVaults, setTimeVaults] = useState<TimeLockVault[]>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState({
     vaultName: "",
     receiver: "",
     amount: "",
-    unlockDate: undefined,
+    unlockDate: "",
   });
 
   // Function to handle vault form input changes
@@ -79,13 +88,50 @@ function Index() {
     }));
   };
 
+  // get spending vaults from local storage and refresh
+  function refreshVaults() {
+    const vaults = JSON.parse(
+      localStorage.getItem("spending-budget-vaults") || "[]"
+    );
+
+    console.log("Vaults: ", vaults);
+    const timeVaults: TimeLockVault[] = [];
+
+    vaults.forEach((vault: TimeLockVaultLocalStorage, index: number) => {
+      // calculate predicate address and get balance
+      const configurable = {
+        RECEIVER: {
+          bits: vault.receiver,
+        },
+        AMOUNT: Number(vault.amount) * 10 ** 6,
+        DEADLINE: vault.unlockDate,
+      };
+
+      // send test eth to the predicate
+      const predicate = new TimeLockPredicate({
+        provider: wallet?.provider as Provider,
+        configurableConstants: configurable,
+      });
+      console.log("Predicate: ", predicate.address, vault.vaultName);
+      // timeVaults.push({
+      //   id: index,
+      //   name: vault.vaultName,
+      //   amount: Number(vault.amount),
+      //   predicateAddress: predicate.address.toB256(),
+      //   unlockDate: vault.unlockDate,
+      // });
+    });
+    setTimeVaults(timeVaults);
+  }
+
+
   const handleCreateVault = () => {
     const unixTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp
     const unlockTimestamp = vaultForm.unlockDate
       ? Math.floor(new Date(vaultForm.unlockDate).getTime() / 1000)
       : undefined;
 
-    const newVault = {
+    const vaultData: TimeLockVaultLocalStorage = {
       vaultName: vaultForm.vaultName,
       receiver: vaultForm.receiver,
       amount: vaultForm.amount,
@@ -93,10 +139,59 @@ function Index() {
       createdAt: unixTimestamp,
     };
 
-    console.log("Vault Created:", newVault); // Log the vault data
+    console.log("Vault Created:", vaultData); // Log the vault data
+    try {
+      if (wallet) {
+        // const baseAssetId: string = wallet.provider.getBaseAssetId();
+        const configurable = {
+          RECEIVER: {
+            bits: wallet.address.toB256(),
+          },
+          AMOUNT: Number(vaultForm.amount) * 10 ** 6,
+          DEADLINE: unlockTimestamp,
+        };
 
-    // Show a success toast
-    toast.success("Vault Created!");
+        // send test eth to the predicate
+        const predicate = new TimeLockPredicate({
+          provider: wallet?.provider as Provider,
+          configurableConstants: configurable,
+        });
+        console.log("Predicate: ", predicate.address, vaultData.vaultName);
+
+        // await wallet.transfer(
+        //   predicate.address,
+        //   bn.parseUnits("0.0001"),
+        //   baseAssetId,
+        //   {
+        //     gasLimit: 10_000,
+        //   }
+        // );
+
+        // Show success UI and log the data
+        toast.success(`${vaultForm.vaultName} Vault Created`);
+
+        // save to localstorage
+        const vaults = JSON.parse(
+          localStorage.getItem("time-lock-vaults") || "[]"
+        );
+        vaults.push(vaultData);
+        localStorage.setItem("time-lock-vaults", JSON.stringify(vaults));
+        refreshVaults();
+      } else {
+        toast.error("Please connect your wallet to create a vault");
+      }
+    } catch (error) {
+      console.error("Error creating vault: ", error);
+      toast.error("Error creating vault");
+    }
+
+    // Reset form and close dialog
+    setVaultForm({
+      vaultName: "",
+      unlockDate: "",
+      amount: "",
+      receiver: wallet ? wallet.address.toB256() : "",
+    });
 
     // Close the dialog
     setIsDialogOpen(false);
@@ -111,6 +206,13 @@ function Index() {
     }));
   }, [wallet]);
 
+
+  useEffect(() => {
+    // Fetch spending vaults from local storage
+    if (wallet) {
+      refreshVaults();
+    }
+  }, [wallet]);
 
   return (
     <>
@@ -211,7 +313,12 @@ function Index() {
             </Dialog>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-            {mockTimeLockVaults.map((vault) => (
+            {timeVaults?.length === 0 && (
+              <div className="text-center text-3xl text-gray-500 mt-20">
+                No time lock vaults created yet.
+              </div>
+            )}
+            {timeVaults?.map((vault) => (
               <TimeLockVaultCard vault={vault} />
             ))}
           </div>
