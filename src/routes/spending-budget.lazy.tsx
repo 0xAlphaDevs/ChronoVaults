@@ -1,7 +1,7 @@
 "use client";
 
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, CirclePlusIcon, User } from "lucide-react";
+import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
 import SpendingVaultCard from "@/components/SpendingVaultCard";
 import { useActiveWallet } from "../hooks/useActiveWallet";
 import toast from "react-hot-toast";
@@ -51,6 +51,10 @@ const mockSpendingVaults: SpendingVault[] = [
   },
 ];
 
+const getTruncatedAddress = (address: string) => {
+  return address.slice(0, 6) + "..." + address.slice(-4);
+};
+
 function Index() {
   const { wallet } = useActiveWallet();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -58,7 +62,7 @@ function Index() {
     vaultName: "",
     spendingLimit: "",
     timePeriod: "",
-    receiver: wallet ? wallet.address.toB256() : "", // Initializing receiver with wallet address,
+    receiver: "", // Initializing receiver with wallet address,
   });
 
   // Function to handle vault creation form input change
@@ -102,6 +106,13 @@ function Index() {
   };
 
   const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    setVaultForm((prev) => ({
+      ...prev,
+      receiver: wallet ? wallet.address.toB256() : "",
+    }));
+  }, [wallet]);
 
   return (
     <>
@@ -154,14 +165,19 @@ function Index() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="timePeriod">Time Period</Label>
-                    <Input
-                      id="timePeriod"
-                      type="date" // Change to type="date"
-                      value={vaultForm.timePeriod || ""} // Set to empty string if undefined
-                      onChange={handleVaultFormChange}
-                      min={today}
-                      required
-                    />
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
+                      <Input
+                        className=" pl-10 block w-full text-muted-foreground"
+                        id="timePeriod"
+                        type="date" // Change to type="date"
+                        value={vaultForm.timePeriod || ""} // Set to empty string if undefined
+                        onChange={handleVaultFormChange}
+                        min={today}
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="receiver">Receiver Address</Label>
@@ -169,7 +185,7 @@ function Index() {
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                       <Input
                         id="receiver"
-                        value={vaultForm.receiver}
+                        value={getTruncatedAddress(vaultForm.receiver)}
                         onChange={handleVaultFormChange}
                         placeholder="Enter receiver address"
                         className="pl-10"
