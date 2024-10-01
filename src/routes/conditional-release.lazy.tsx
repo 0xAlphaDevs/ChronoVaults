@@ -118,10 +118,9 @@ function Index() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Create Spending Budget Vault</DialogTitle>
+                  <DialogTitle>Create Conditional Release Vault</DialogTitle>
                   <DialogDescription>
-                    Set up a new spending budget with monthly limit and weekly
-                    percentage.
+                    Set up a new conditional release vault with secret.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
