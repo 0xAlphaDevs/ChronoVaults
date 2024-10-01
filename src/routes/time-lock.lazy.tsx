@@ -1,7 +1,7 @@
 "use client";
 
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { DollarSign, CirclePlusIcon, User } from "lucide-react";
+import { DollarSign, CirclePlusIcon, User, Calendar } from "lucide-react";
 import TimeLockVaultCard from "@/components/TimeLockVaultCard";
+import { useActiveWallet } from "../hooks/useActiveWallet";
+import toast from "react-hot-toast";
 
 export const Route = createLazyFileRoute("/time-lock")({
   component: Index,
 });
+
 
 interface TimeLockVault {
   id: number;
@@ -52,18 +55,24 @@ const mockTimeLockVaults: TimeLockVault[] = [
   },
 ];
 
+const getTruncatedAddress = (address: string) => {
+  return address.slice(0, 6) + "..." + address.slice(-4);
+};
+
+
 function Index() {
+  const { wallet } = useActiveWallet();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [vaultForm, setVaultForm] = useState<{
     vaultName: string;
     receiver: string;
     amount: string;
-    lockDate: string | undefined;
+    unlockDate: string | undefined;
   }>({
     vaultName: "",
     receiver: "",
     amount: "",
-    lockDate: undefined,
+    unlockDate: undefined,
   });
 
   // Function to handle vault form input changes
@@ -75,13 +84,38 @@ function Index() {
     }));
   };
 
-  // Function to handle vault creation
   const handleCreateVault = () => {
-    console.log("Vault Data: ", vaultForm);
+    const unixTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp
+    const unlockTimestamp = vaultForm.unlockDate
+      ? Math.floor(new Date(vaultForm.unlockDate).getTime() / 1000)
+      : undefined;
+
+    const newVault = {
+      vaultName: vaultForm.vaultName,
+      receiver: vaultForm.receiver,
+      amount: vaultForm.amount,
+      unlockDate: unlockTimestamp,
+      createdAt: unixTimestamp,
+    };
+
+    console.log("Vault Created:", newVault); // Log the vault data
+
+    // Show a success toast
+    toast.success("Vault Created!");
+
+    // Close the dialog
     setIsDialogOpen(false);
   };
 
   const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    setVaultForm((prev) => ({
+      ...prev,
+      receiver: wallet ? wallet.address.toB256() : "",
+    }));
+  }, [wallet]);
+
 
   return (
     <>
@@ -108,7 +142,6 @@ function Index() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  {/* Vault Name */}
                   <div className="space-y-2">
                     <Label htmlFor="vaultName">Vault Name</Label>
                     <Input
@@ -120,23 +153,6 @@ function Index() {
                     />
                   </div>
 
-                  {/* Receiver */}
-                  <div className="space-y-2">
-                    <Label htmlFor="receiver">Receiver Address</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input
-                        id="receiver"
-                        value={vaultForm.receiver}
-                        onChange={handleVaultFormChange}
-                        placeholder="Enter receiver address"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Amount */}
                   <div className="space-y-2">
                     <Label htmlFor="amount">Amount</Label>
                     <div className="relative">
@@ -153,18 +169,39 @@ function Index() {
                     </div>
                   </div>
 
-                  {/* Date Input for Lock Period */}
                   <div className="space-y-2">
-                    <Label htmlFor="lockDate">Lock Date</Label>
-                    <Input
-                      id="lockDate"
-                      type="date" // Change to type="date"
-                      value={vaultForm.lockDate || ""} // Set to empty string if undefined
-                      onChange={handleVaultFormChange}
-                      min={today}
-                      required
-                    />
+                    <Label htmlFor="unlockDate">Unlock Date</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
+                      <Input
+                        className=" pl-10 block w-full text-muted-foreground"
+                        id="unlockDate"
+                        type="date" // Change to type="date"
+                        value={vaultForm.unlockDate || ""} // Set to empty string if undefined
+                        onChange={handleVaultFormChange}
+                        min={today}
+                        required
+                      />
+                    </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="receiver">Receiver Address</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Input
+                        id="receiver"
+                        value={getTruncatedAddress(vaultForm.receiver)}
+                        onChange={handleVaultFormChange}
+                        placeholder="Enter receiver address"
+                        className="pl-10"
+                        disabled
+                        required
+                      />
+                    </div>
+                  </div>
+
                 </div>
                 <DialogFooter>
                   <Button
