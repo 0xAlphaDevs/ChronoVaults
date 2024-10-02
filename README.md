@@ -21,12 +21,16 @@ You can create following vaults to manage your finances using Chrono Vaults:
 ## Links
 
 - [Deployed URL]()
-- [Presentation]()
+- [Presentation](https://www.canva.com/design/DAGSNmeP_rI/AUYczLUMUSBg02gk4S1CuA/view)
 - [Video]()
 
 ## Tech Stack
 
--
+- Fuel Testnet
+- Fuel Typescript SDK (Front-end)
+- Fuel Rust SDK (Sway Predictaes)
+- Pyth Orcale (Price Feeds)
+- Vite + React
 
 ## High Level Architecture
 
