@@ -22,7 +22,7 @@ You can create following vaults to manage your finances using Chrono Vaults:
 
 - [Deployed URL](https://chrono-vaults.vercel.app)
 - [Presentation](https://www.canva.com/design/DAGSNmeP_rI/AUYczLUMUSBg02gk4S1CuA/view)
-- [Video]()
+- [Video](https://youtu.be/dWd7aJ9CbqY)
 
 ## Tech Stack
 

@@ -139,8 +139,8 @@ const TimeLockVaultCard = ({ vault }: { vault: TimeLockVault }) => {
         configurableConstants: configurable,
         data: [
           configurable.RECEIVER,
-          vault.unlockDate + 1, // only for testing withdrawal before time period
-          // new Date().getTime() / 1000, // TO DO: uncomment this line for production
+          // vault.unlockDate + 1, // only for testing withdrawal before time period
+          new Date().getTime() / 1000, // TO DO: uncomment this line for production
         ],
       });
 

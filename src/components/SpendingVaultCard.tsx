@@ -153,8 +153,8 @@ const SpendingVaultCard = ({ vault }: { vault: SpendingVault }) => {
         data: [
           configurable.RECEIVER,
           Number(withdrawAmount) * 10 ** 6,
-          // new Date().getTime() / 1000, // TO DO: uncomment this line for production
-          new Date().getTime() / 1000 + vault.timePeriod, // only for testing withdrawal before time period
+          new Date().getTime() / 1000, // TO DO: uncomment this line for production
+          // new Date().getTime() / 1000 + vault.timePeriod, // only for testing withdrawal before time period
         ],
       });
 
