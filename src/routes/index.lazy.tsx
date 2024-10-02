@@ -102,26 +102,29 @@ function Index() {
             <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
               <CardHeader>
                 <CardDescription className="text-center pt-1 text-lg text-white">
-                  This is a feature description of Chrono Vaults
+                  Track your portfolio value and assets on Fuel Network at one
+                  place.
                 </CardDescription>
               </CardHeader>
             </Card>
             <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
               <CardHeader>
                 <CardDescription className="text-center pt-1 text-lg text-white">
-                  This is a feature description of Chrono Vaults
+                  Create smart spending, time lock and conditional release
+                  vaults.
                 </CardDescription>
               </CardHeader>
             </Card>
             <Card className="shadow-sm border-none h-full w-full rounded-lg bg-green-300 bg-opacity-15 border cursor-pointer transform transition-transform duration-300 ease-in-out hover:scale-110">
               <CardHeader>
                 <CardDescription className="text-center pt-1 text-lg text-white">
-                  This is a feature description of Chrono Vaults
+                  Manage onchain assets with stateless accounts powered by
+                  predicates on Fuel
                 </CardDescription>
               </CardHeader>
             </Card>
           </div>
-          <div className="fixed mx-[39%] bottom-4">
+          <div className="fixed ] bottom-4">
             <div className="flex justify-center items-center">
               <p className="text-muted-foreground">
                 &copy;{" "}
