@@ -61,9 +61,10 @@ You can create following vaults to manage your finances using Chrono Vaults:
 
 ## Future Vision
 
--
+- Support more assets beyond USDT for vaults, feature to create custom logic for vauts, use predicate accounts with agents to perform automated operations onchain, enhancements in UI for better user experience
+- Continue builing and refining the product and launch the first version soon.
 
-## Instructions to Setup
+## Instructions to setup
 
 Follow these instructions to set up and run the project:
 
